@@ -1,133 +1,117 @@
-## Bull — это легковесная и интуитивно понятная система контроля версий, предназначенная для управления изменениями в ваших проектах. Она идеально подходит для небольших команд и индивидуальных разработчиков, которым нужна простота и эффективность.
+## Bull — Lightweight and Intuitive Version Control System
 
-## 🚀 Основные возможности
+Bull is a lightweight and intuitive version control system designed to manage changes in your projects. It is ideal for small teams and individual developers who need simplicity and efficiency.
 
-- Инициализация проектов: Создание структуры для работы с версиями.
-- Сохранение версий: Фиксация состояния проекта с уникальными именами.
-- Игнорирование файлов: Гибкая настройка игнорируемых файлов через .bullgnore.
-- Просмотр версий: Удобный доступ к списку версий по именам и ID.
-- Восстановление версий: Быстрое возвращение к нужной версии по имени или ID.
-- Анализ изменений: Отслеживание изменений между текущим состоянием и сохранёнными версиями.
+## 🚀 Key Features
 
+- **Project Initialization**: Sets up the structure for version control.
+- **Version Saving**: Captures the project state with unique names.
+- **File Ignoring**: Flexible configuration of ignored files via `.bullgnore`.
+- **Version Viewing**: Easy access to a list of versions by names and IDs.
+- **Version Restoration**: Quickly revert to a specific version by name or ID.
+- **Change Analysis**: Tracks changes between the current state and saved versions.
 
-## 📋 Команды
-### bull init
-Инициализирует новый проект, создавая директорию .bull для хранения метаданных.
-Пример:
+## 📋 Commands
 
-`bull init`
+### `bull init`
+Initializes a new project, creating a `.bull` directory for metadata storage.  
+**Example**:  
+`bull init`  
+**Result**: Creates the `.bull` directory.
 
-`Результат: Создаётся директория .bull.`
+### `bull pack <name>`
+Saves the current project version with the specified name.  
+**Arguments**:  
+`<name>` — Version name (required).  
+**Example**:  
+`bull pack v1.0`  
+**Result**: Current version is saved as `v1.0`.
 
-### bull pack <название>
-Сохраняет текущую версию проекта с указанным названием.
-Аргументы:
+### `bull gnore`
+Creates a `.bullgnore` file to specify ignored files and directories.  
+**Example**:  
+`bull gnore`  
+**Result**: Creates a `.bullgnore` file in the project root.
 
-<название> — имя версии (обязательное).
-
-Пример:
-`bull pack v1.0`
-
-`Результат: Текущая версия сохраняется с именем v1.0.`
-
-### bull gnore
-Создаёт файл .bullgnore для указания игнорируемых файлов и директорий.
-Пример:
-`bull gnore`
-
-`Результат: Создаётся файл .bullgnore в корне проекта.`
-
-### bull get box name
-Выводит список всех названий сохранённых версий.
-Пример:
-`bull get box name`
-
-`Результат:
+### `bull get box name`
+Lists all names of saved versions.  
+**Example**:  
+`bull get box name`  
+**Result**:  
+```
 v1.0
 v1.1
-release-2.0`
+release-2.0
+```
 
-
-### bull get box id
-Выводит список идентификаторов (ID) сохранённых версий.
-Пример:
-`bull get box id`
-
-`Результат:
+### `bull get box id`
+Lists the IDs of saved versions.  
+**Example**:  
+`bull get box id`  
+**Result**:  
+```
 9321323
 3918021
-5883012`
+5883012
+```
 
-
-### bull get box full
-Выводит список всех версий с их названиями и ID.
-Пример:
-`bull get box full`
-
-`Результат:
+### `bull get box full`
+Lists all versions with their names and IDs.  
+**Example**:  
+`bull get box full`  
+**Result**:  
+```
 v1.0 - 9321323
 v1.1 - 3918021
-release-2.0 - 5883012`
+release-2.0 - 5883012
+```
 
+### `bull unpack -id <id>`
+Restores the project to the version specified by ID.  
+**Arguments**:  
+`<id>` — Version ID (required).  
+**Example**:  
+`bull unpack -id 5291023`  
+**Result**: Project reverts to the version with ID `5291023`.
 
-### bull unpack -id <id>
-Восстанавливает проект к версии, указанной по ID.
-Аргументы:
+### `bull unpack last`
+Restores the project to the last saved version.  
+**Example**:  
+`bull unpack last`  
+**Result**: Project reverts to the latest version.
 
-<id> — идентификатор версии (обязательный).
+### `bull unpack <name>`
+Restores the project to the version specified by name.  
+**Arguments**:  
+`<name>` — Version name (required).  
+**Example**:  
+`bull unpack v1.0`  
+**Result**: Project reverts to version `v1.0`.
 
-Пример:
-`bull unpack -id 5291023`
+### `bull show change`
+Displays changes between the current project state and the last saved version.  
+**Example**:  
+`bull show change`  
+**Result**: Lists added, deleted, or modified files.
 
-`Результат: Проект возвращается к версии с ID 5291023.`
+## 💡 Tips
 
-### bull unpack last
-Восстанавливает проект к последней сохранённой версии.
-Пример:
-`bull unpack last`
+- **Version Names**: Use clear and consistent names like `v1.0`, `release-2.0`.  
+- **`.bullgnore` File**: Regularly update to exclude unnecessary files (e.g., temporary files or dependencies).  
+- **Version Checking**: Use `bull get box full` before restoring to confirm the correct version name or ID.
 
-`Результат: Проект возвращается к последней версии.`
+## 🛠 Installation
 
-### bull unpack <имя>
-Восстанавливает проект к версии, указанной по названию.
-Аргументы:
+1. Clone the repository:  
+   `git clone https://github.com/atxxxm/bull.git`  
+2. Grant execution permission:  
+   `chmod +x install.sh`  
+3. Run the script:  
+   `./install.sh`  
+4. Start using Bull in your project!
 
-<имя> — название версии (обязательное).
+### 📄 License
+Bull is distributed under the GNU General Public License v2.0.  
+Note that, per the GPL-2.0 license, any derivative works must also be distributed under this license.
 
-Пример:
-`bull unpack v1.0`
-
-`Результат: Проект возвращается к версии v1.0.`
-
-### bull show change
-Показывает изменения между текущим состоянием проекта и последней сохранённой версией.
-Пример:
-`bull show change`
-
-`Результат: Выводится список добавленных, удалённых или изменённых файлов.`
-
-## 💡 Рекомендации
-
-Названия версий: Используйте понятные и последовательные имена, такие как v1.0, release-2.0.
-Файл .bullgnore: Регулярно обновляйте, чтобы исключить ненужные файлы (например, временные файлы или зависимости).
-Проверка версий: Используйте bull get box full перед восстановлением, чтобы убедиться в правильности имени или ID версии.
-
-
-## 🛠 Установка
-
-Склонируйте репозиторий: `git clone https://github.com/atxxxm/bull.git`
-
-Сделайте разрешение на выполнение: `chmod +x install.sh`
-
-Запустите скрипт: `./intsall.sh`
-
-Начните использовать Bull в своём проекте!
-
-
-### 📄 Лицензия
-Bull распространяется под лицензией GNU General Public License v2.0.
-
-### Обратите внимание, что, в соответствии с лицензией GPL-2.0, любые производные работы также должны распространяться под этой лицензией.
-
-
-### ⚠️ **Внимание**: Bull работает **только на Linux**. Для других операционных систем поддержка пока не реализована. Убедитесь, что вы используете Linux перед началом работы.
+### ⚠️ **Warning**: Bull works **only on Linux**. Support for other operating systems is not yet implemented. Ensure you are using Linux before starting.
