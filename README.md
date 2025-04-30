@@ -1,6 +1,3 @@
-
-![bull_icon](https://github.com/user-attachments/assets/5a1bc5c5-576c-4ec5-aee2-0b76d5a89d24)
-
 ## Bull — Lightweight and Intuitive Version Control System
 
 Bull is a lightweight and intuitive version control system designed to manage changes in your projects. It is ideal for small teams and individual developers who need simplicity and efficiency.
