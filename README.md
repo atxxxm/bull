@@ -129,7 +129,7 @@ Deletes the last box.
 Deletes a box by the specified name.
 
 **Example** 
-`bull delete -name  v0.1`
+`bull delete -name v0.1`
 
 **Result**: The box with the specified name will be deleted.
 
