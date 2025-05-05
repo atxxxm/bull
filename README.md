@@ -117,6 +117,30 @@ Displays changes between the current project state and the last saved version.
 
 **Result**: Lists added, deleted, or modified files.
 
+### `bull delete -last'
+Deletes the last box.
+
+**Example** 
+`bull delete -last`
+
+**Result**: Deletes the last box in .bull
+
+### `bull delete -name <name>'
+Deletes a box by the specified name.
+
+**Example** 
+`bull delete -name  v0.1`
+
+**Result**: The box with the specified name will be deleted.
+
+### `bull delete -id <id>'
+Deletes a box by the specified id.
+
+**Example** 
+`bull delete -name  5291023`
+
+**Result**: The box with the specified id will be deleted.
+
 ## 💡 Tips
 
 - **Version Names**: Use clear and consistent names like `v1.0`, `release-2.0`.  
