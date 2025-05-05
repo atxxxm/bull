@@ -137,7 +137,7 @@ Deletes a box by the specified name.
 Deletes a box by the specified id.
 
 **Example** 
-`bull delete -name  5291023`
+`bull delete -id 5291023`
 
 **Result**: The box with the specified id will be deleted.
 
