@@ -117,7 +117,7 @@ Displays changes between the current project state and the last saved version.
 
 **Result**: Lists added, deleted, or modified files.
 
-### `bull delete -last'
+### `bull delete -last`
 Deletes the last box.
 
 **Example** 
@@ -125,7 +125,7 @@ Deletes the last box.
 
 **Result**: Deletes the last box in .bull
 
-### `bull delete -name <name>'
+### `bull delete -name <name>`
 Deletes a box by the specified name.
 
 **Example** 
@@ -133,7 +133,7 @@ Deletes a box by the specified name.
 
 **Result**: The box with the specified name will be deleted.
 
-### `bull delete -id <id>'
+### `bull delete -id <id>`
 Deletes a box by the specified id.
 
 **Example** 
