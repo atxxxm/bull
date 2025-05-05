@@ -65,6 +65,28 @@ int main(int argc, char *argv[])
     {
         action.last_change();
     }
+    else if (strcmp(argv[1], "delete") == 0 && strcmp(argv[2], "-name") == 0)
+    {
+        if (argc < 4 || argv[3][0] == '\0')
+        {
+            std::cout << "[ERROR] The name of the box cannot be empty!" << std::endl;
+            return -1;
+        }
+        action.delete_name(argv[3]);
+    }
+    else if (strcmp(argv[1], "delete") == 0 && strcmp(argv[2], "-id") == 0)
+    {
+        if (argc < 4 || argv[3][0] == '\0')
+        {
+            std::cout << "[ERROR] The ID of the box cannot be empty!" << std::endl;
+            return -1;
+        }
+        action.delete_id(argv[3]);
+    }
+    else if (strcmp(argv[1], "delete") == 0 || strcmp(argv[1], "-last") == 0)
+    {
+        action.delete_last();
+    }
     else
     {
         std::cout << "[ERROR] Unknown command" << std::endl;

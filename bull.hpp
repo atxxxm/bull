@@ -390,6 +390,7 @@ class _action_
 {
 private:
     bool is_BULL() {  return (access(config_folder_name, F_OK) == 0); }
+
     bool is_box_list()
     {
         std::ifstream bl(std::string(config_folder_name) + "/" + box_list_name);
@@ -757,6 +758,75 @@ private:
         return format_str;
     }
 
+    int delete_box(std::string path)
+    {
+        std::string line, full_path;
+        std::ifstream read_file(path + "/" + files_list_name);
+
+        if (!read_file.is_open()) return -1;
+
+        while (std::getline(read_file, line))
+        {
+            full_path = path + "/" + line;
+            remove(full_path.c_str());
+        }
+
+        read_file.close();
+
+        read_file.open(path + "/" + folders_list_name);
+
+        if (!read_file.is_open()) return -1;
+
+        while (std::getline(read_file, line))
+        {
+            full_path = path + "/" + line;
+            remove(full_path.c_str());
+        }
+
+        read_file.close();
+
+        full_path = path + "/" + files_list_name;
+        remove(full_path.c_str());
+        full_path = path + "/" + folders_list_name;
+        remove(full_path.c_str());
+        remove(path.c_str());
+
+        return 0;
+
+    }
+
+    int get_line_where_id(std::string id)
+    {
+        std::string line, word;
+        std::ifstream r(std::string(config_folder_name) + "/" + box_list_name);
+        int count_line = 0;
+    
+        if (!r.is_open())
+        {
+            std::cout << "no open!" << std::endl;
+            return -1;
+        }
+    
+        while (std::getline(r, line))
+        {
+            count_line++;
+            std::stringstream ss(line);
+    
+            while (ss >> word)
+            {
+                if (word == id)
+                {
+                    r.close();
+                    return count_line;
+                }
+            }
+        }
+    
+        r.close();
+    
+        return 0;
+    }
+
 public:  
     void get_box_list_name()
     {
@@ -1006,6 +1076,153 @@ public:
         remove(files_list_name.c_str());
     }
 
+    void delete_last()
+    {
+        std::ifstream check(std::string(config_folder_name) + "/" + box_list_name);
+
+        if (!check.is_open())
+        {
+            std::cout << "[ERROR] The project has not been initialized!" << std::endl;
+            return;
+        }
+
+        check.close();
+
+        std::string id = get_last_id();
+        std::string path = std::string(config_folder_name) + "/" + id, str, _str_;
+        int i = 0;
+
+        delete_box(path);
+
+        int line = get_line_where_id(id);
+
+        if (line == 0 || line == -1)
+        {
+            std::cout << "[ERROR] Not a single box was found!" << std::endl;
+            return;
+        }
+
+        std::ifstream read_(std::string(config_folder_name) + "/" + box_list_name);
+
+        if (!read_.is_open()) return;
+
+        while (std::getline(read_, _str_))
+        {
+            i++;
+            if (i == line) continue;
+            str += _str_ + "\n";
+        }
+
+        read_.close();
+        
+        std::ofstream write_(std::string(config_folder_name) + "/" + box_list_name);
+
+        if (!write_.is_open()) return;
+
+        write_ << str;
+
+        write_.close();
+        
+    }
+
+    void delete_name(char *name)
+    {
+        std::ifstream check(std::string(config_folder_name) + "/" + box_list_name);
+
+        if (!check.is_open())
+        {
+            std::cout << "[ERROR] The project has not been initialized!" << std::endl;
+            return;
+        }
+
+        check.close();
+
+        int id_ = name_to_id(name);
+        std::string id = std::to_string(id_);
+        std::string path = std::string(config_folder_name) + "/" + id, str, _str_;
+        int i = 0;
+
+        delete_box(path);
+
+        int line = get_line_where_id(id);
+
+        if (line == 0 || line == -1)
+        {
+            std::cout << "[ERROR] Not a single box was found!" << std::endl;
+            return;
+        }
+
+        std::ifstream read_(std::string(config_folder_name) + "/" + box_list_name);
+
+        if (!read_.is_open()) return;
+
+        while (std::getline(read_, _str_))
+        {
+            i++;
+            if (i == line) continue;
+            str += _str_ + "\n";
+        }
+
+        read_.close();
+        
+        std::ofstream write_(std::string(config_folder_name) + "/" + box_list_name);
+
+        if (!write_.is_open()) return;
+
+        write_ << str;
+
+        write_.close();
+        
+    }
+
+    void delete_id(char *id_)
+    {
+        std::ifstream check(std::string(config_folder_name) + "/" + box_list_name);
+
+        if (!check.is_open())
+        {
+            std::cout << "[ERROR] The project has not been initialized!" << std::endl;
+            return;
+        }
+
+        check.close();
+
+        std::string id = std::string(id_);
+        std::string path = std::string(config_folder_name) + "/" + id, str, _str_;
+        int i = 0;
+
+        delete_box(path);
+
+        int line = get_line_where_id(id);
+
+        if (line == 0 || line == -1)
+        {
+            std::cout << "[ERROR] Not a single box was found!" << std::endl;
+            return;
+        }
+
+        std::ifstream read_(std::string(config_folder_name) + "/" + box_list_name);
+
+        if (!read_.is_open()) return;
+
+        while (std::getline(read_, _str_))
+        {
+            i++;
+            if (i == line) continue;
+            str += _str_ + "\n";
+        }
+
+        read_.close();
+        
+        std::ofstream write_(std::string(config_folder_name) + "/" + box_list_name);
+
+        if (!write_.is_open()) return;
+
+        write_ << str;
+
+        write_.close();
+        
+    }
 };
 
 #endif
