@@ -5,6 +5,7 @@
 
 int main(int argc, char *argv[])
 {
+    LOG logger;
     _init_ init;
     _action_ action;
 
@@ -16,7 +17,7 @@ int main(int argc, char *argv[])
     {
         if (argc < 3 || argv[2][0] == '\0')
         {
-            std::cout << "[ERROR] The name of the box cannot be empty!" << std::endl;
+            logger.ERROR("The name of the box cannot be empty!");
             return -1;
         }
         init.add_project(argv[2]);
@@ -41,7 +42,7 @@ int main(int argc, char *argv[])
     {
         if (argc < 4 || argv[3][0] == '\0')
         {
-            std::cout << "[ERROR] The ID of the box cannot be empty!" << std::endl;
+            logger.ERROR("The ID of the box cannot be empty!");
             return -1;
         }
         action.set_box_id(argv[3]);
@@ -56,7 +57,7 @@ int main(int argc, char *argv[])
     {
         if (argc < 3 || argv[2][0] == '\0')
         {
-            std::cout << "[ERROR] The name of the box cannot be empty!" << std::endl;
+            logger.ERROR("The name of the box cannot be empty!");
             return -1;
         }
         action.set_box(argv[2]);
@@ -69,7 +70,7 @@ int main(int argc, char *argv[])
     {
         if (argc < 4 || argv[3][0] == '\0')
         {
-            std::cout << "[ERROR] The name of the box cannot be empty!" << std::endl;
+            logger.ERROR("The name of the box cannot be empty!");
             return -1;
         }
         action.delete_name(argv[3]);
@@ -78,7 +79,7 @@ int main(int argc, char *argv[])
     {
         if (argc < 4 || argv[3][0] == '\0')
         {
-            std::cout << "[ERROR] The ID of the box cannot be empty!" << std::endl;
+            logger.ERROR("The ID of the box cannot be empty!");
             return -1;
         }
         action.delete_id(argv[3]);
@@ -89,7 +90,7 @@ int main(int argc, char *argv[])
     }
     else
     {
-        std::cout << "[ERROR] Unknown command" << std::endl;
+        logger.ERROR("Unknown command");
     }
     return 0;
 }

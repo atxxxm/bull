@@ -13,6 +13,7 @@
 #include <sstream>
 #include <fcntl.h>
 #include <cstdint>
+#include "slog.hpp"
 
 const char *config_folder_name = ".bull";
 const std::string bullgnore_name = ".bullgnore";
@@ -183,6 +184,8 @@ public:
 class _init_
 {
 private:
+    LOG logger;
+
     bool is_BULL() {  return (access(config_folder_name, F_OK) == 0); }
 
     int folder_box_list_create(int id)
@@ -330,11 +333,11 @@ public:
     {
         if (mkdir(config_folder_name, 0777) != 0)
         {
-            std::cout << "[ERROR] The project was not initiated!" << std::endl;
+            logger.ERROR("The project was not initiated!");
             return -1;
         }
 
-        std::cout << "[DONE] The project has been initiated!" << std::endl;
+        logger.INFO("The project has been initiated!");
 
         std::ofstream box(config_folder_name + std::string("/") + box_list_name);
 
@@ -362,11 +365,11 @@ public:
             create_folders_at_bull(id);
             create_files_at_bull(id);
 
-            std::cout << "[DONE] The packing '"<< folder_name << "' was successful!" << std::endl;
+            logger.INFO_NE("The packing '%s' was successful!", folder_name);
         }
         else
         {
-            std::cout << "[ERROR] Your project has not been initialized!" << std::endl;
+            logger.INFO("Your project has not been initialized!");
         }
        
 
@@ -378,7 +381,7 @@ public:
         std::ofstream gr(".bullgnore");
         gr.close();
 
-        std::cout << "[DONE] bullgnore has been successfully created!"  << std::endl;
+        logger.INFO("bullgnore has been successfully created!");
 
         return 0;
     }
@@ -389,6 +392,8 @@ public:
 class _action_
 {
 private:
+    LOG logger;
+
     bool is_BULL() {  return (access(config_folder_name, F_OK) == 0); }
 
     bool is_box_list()
@@ -919,7 +924,7 @@ public:
 
         if (!folder_list.is_open())
         {
-            std::cout << "[ERROR] There is no box with this id!" << std::endl;
+            logger.ERROR("There is no box with this id!");
             return;
         }
 
@@ -953,7 +958,7 @@ public:
 
         file_list.close();
 
-        std::cout << "[DONE] The box '"<< id <<"' has been successfully unpacked" << std::endl;
+        logger.INFO_NE("The box '%d' has been successfully unpacked", id);
     }
 
     void set_box(char *name)
@@ -965,7 +970,7 @@ public:
 
         if (!folder_list.is_open())
         {
-            std::cout << "[ERROR] There is no box with that name!" << std::endl;
+            logger.ERROR("There is no box with that name!");
             return;
         }
 
@@ -999,7 +1004,7 @@ public:
 
         file_list.close();
 
-        std::cout << "[DONE] The box '"<< name <<"' has been successfully unpacked" << std::endl;
+        logger.INFO_NE("The box '%s' has been successfully unpacked", name);
     }
 
     void pack_last_box()
@@ -1041,20 +1046,20 @@ public:
 
         file_list.close();
 
-        std::cout << "[DONE] The last box has been successfully unpacked" << std::endl;
+        logger.INFO("The last box has been successfully unpacked");
     }
 
     void last_change()
     {
         if (!is_BULL())
         {
-            std::cout << "[ERROR] The project has not been initialized" << std::endl;
+            logger.ERROR("The project has not been initialized");
             return;
         }
 
         if (!is_box_list())
         {
-            std::cout << "[ERROR] Not box has been added!" << std::endl;
+            logger.ERROR("Not box has been added!");
         }
 
         std::string id = get_last_id();
@@ -1082,7 +1087,7 @@ public:
 
         if (!check.is_open())
         {
-            std::cout << "[ERROR] The project has not been initialized!" << std::endl;
+            logger.ERROR("The project has not been initialized!");
             return;
         }
 
@@ -1098,7 +1103,7 @@ public:
 
         if (line == 0 || line == -1)
         {
-            std::cout << "[ERROR] Not a single box was found!" << std::endl;
+            logger.ERROR("Not a single box was found!");
             return;
         }
 
@@ -1122,6 +1127,8 @@ public:
         write_ << str;
 
         write_.close();
+
+        logger.INFO("The last box was successfully deleted!");
         
     }
 
@@ -1131,7 +1138,7 @@ public:
 
         if (!check.is_open())
         {
-            std::cout << "[ERROR] The project has not been initialized!" << std::endl;
+            logger.ERROR("The project has not been initialized!");
             return;
         }
 
@@ -1148,7 +1155,7 @@ public:
 
         if (line == 0 || line == -1)
         {
-            std::cout << "[ERROR] Not a single box was found!" << std::endl;
+            logger.ERROR("Not a single box was found!");
             return;
         }
 
@@ -1172,6 +1179,8 @@ public:
         write_ << str;
 
         write_.close();
+
+        logger.INFO("The box by name was successfully deleted!");
         
     }
 
@@ -1181,7 +1190,7 @@ public:
 
         if (!check.is_open())
         {
-            std::cout << "[ERROR] The project has not been initialized!" << std::endl;
+            logger.ERROR("The project has not been initialized!");
             return;
         }
 
@@ -1197,7 +1206,7 @@ public:
 
         if (line == 0 || line == -1)
         {
-            std::cout << "[ERROR] Not a single box was found!" << std::endl;
+            logger.ERROR("Not a single box was found!");
             return;
         }
 
@@ -1221,6 +1230,8 @@ public:
         write_ << str;
 
         write_.close();
+
+        logger.INFO("The ID box has been successfully deleted!");
         
     }
 };
