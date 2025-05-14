@@ -1,0 +1,143 @@
+#include "slog.hpp"
+#include <iostream>
+#include <fstream>
+#include <string>
+#include <chrono>
+#include <stdio.h>
+#include <stdarg.h>
+#include <ctime>
+
+void LOG::print(COLOR color, const char* text, const char* str, va_list args) noexcept 
+{
+    char buff[1024] = {0};
+    char file_buff[1024] = {0};
+    snprintf(buff, sizeof(buff), "[\033[1;%dm%s\033[0m]: %s\n", static_cast<int>(color), text, str);
+    vprintf(buff, args);
+
+    snprintf(file_buff, sizeof(file_buff), "[%s]: %s\n", text, str);
+
+    if (file.is_open()) {
+        char formatted_buff[1024] = {0};
+        vsnprintf(formatted_buff, sizeof(formatted_buff), file_buff, args);
+
+        std::time_t now = std::time(nullptr);
+        std::tm* local_time = std::localtime(&now);
+
+        int hours = local_time->tm_hour;
+        int minutes = local_time->tm_min;
+        int seconds = local_time->tm_sec;
+        file << "(" << hours << ":" << minutes << ":" << seconds << ")" << formatted_buff;
+    }
+}
+void LOG::print(COLOR color, const char* text, std::string str) 
+{
+    printf("[\033[1;%dm%s\033[0m]: ", static_cast<int>(color), text);
+    std::cout << str << "\n";
+
+    if (file.is_open()) {
+        std::time_t now = std::time(nullptr);
+        std::tm* local_time = std::localtime(&now);
+
+        int hours = local_time->tm_hour;
+        int minutes = local_time->tm_min;
+        int seconds = local_time->tm_sec;
+
+        file << "(" << hours << ":" << minutes << ":" << seconds << ")[" << text << "]: " << str << "\n";
+    }
+}
+
+void LOG::DEBUG_NE(const char* str, ...) noexcept 
+{
+    va_list args;
+    va_start(args, str);
+    print(COLOR::BLUE, "DEBUG", str, args);
+    va_end(args);
+}
+
+void LOG::DEBUG(std::string str) 
+{
+    print(COLOR::BLUE, "DEBUG", str);
+}
+
+void LOG::INFO_NE(const char* str, ...) noexcept 
+{
+    va_list args;
+    va_start(args, str);
+    print(COLOR::LIGHT_BLUE, "INFO", str, args);
+    va_end(args);
+}
+
+void LOG::INFO(std::string str) 
+{
+    print(COLOR::LIGHT_BLUE, "INFO", str);
+}
+
+void LOG::WARNING_NE(const char* str, ...) noexcept 
+{
+    va_list args;
+    va_start(args, str);
+    print(COLOR::ORANGE, "WARNING", str, args);
+    va_end(args);
+}
+
+void LOG::WARNING(std::string str) 
+{
+    print(COLOR::ORANGE, "WARNING", str);
+}
+
+void LOG::ERROR_NE(const char* str, ...) noexcept 
+{
+    va_list args;
+    va_start(args, str);
+    print(COLOR::RED, "ERROR", str, args);
+    va_end(args);
+}
+
+void LOG::ERROR(std::string str) 
+{
+    print(COLOR::RED, "ERROR", str);
+}
+
+void LOG::FATAL_NE(const char* str, ...) noexcept 
+{
+    va_list args;
+    va_start(args, str);
+    print(COLOR::DARK_RED, "FATAL", str, args);
+    va_end(args);
+}
+
+void LOG::FATAL(std::string str) 
+{
+    print(COLOR::DARK_RED, "FATAL", str);
+}
+
+bool LOG::new_open(std::string filename) 
+{
+    file.open(filename);
+    return file.is_open();
+}
+
+bool LOG::open(std::string filename) 
+{
+    file.open(filename, std::ios::app);
+    return file.is_open();
+}
+
+bool LOG::auto_open() 
+{
+    std::time_t now = std::time(nullptr);
+    std::tm* local_time = std::localtime(&now);
+
+    int year = local_time->tm_year + 1900;
+    int month = local_time->tm_mon + 1;
+    int day = local_time->tm_mday;
+
+    std::string filename = "logging_" + std::to_string(day) + "_" + std::to_string(month) + "_" + std::to_string(year) + ".log";
+    file.open(filename, std::ios::app);
+    return file.is_open();
+}
+
+void LOG::close() 
+{
+    file.close();
+}

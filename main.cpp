@@ -92,5 +92,6 @@ int main(int argc, char *argv[])
     {
         logger.ERROR("Unknown command");
     }
+
     return 0;
 }
