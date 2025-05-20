@@ -195,6 +195,10 @@ Restores files and folders from the specified box to the current directory.
 Bull is distributed under the GNU General Public License v2.0 (GPL-2.0).
 
 
+
+
+
+
 # RU
 # Документация для системы контроля версий Bull
 
