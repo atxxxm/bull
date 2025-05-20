@@ -46,6 +46,8 @@ public:
 
     void FATAL(std::string str);
 
+    void CUSTOM(std::string color, const char* text, std::string str);
+
     bool new_open(std::string filename);
 
     bool open(std::string filename);

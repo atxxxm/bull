@@ -26,15 +26,7 @@ int main(int argc, char *argv[])
     {
         init.gnore();
     }
-    else if (strcmp(argv[1], "get") == 0 && strcmp(argv[2], "box") == 0 && strcmp(argv[3], "name") == 0)
-    {
-        action.get_box_list_name();
-    }
-    else if (strcmp(argv[1], "get") == 0 && strcmp(argv[2], "box") == 0 && strcmp(argv[3], "id") == 0)
-    {
-        action.get_box_list_id();
-    }
-    else if (strcmp(argv[1], "get") == 0 && strcmp(argv[2], "box") == 0 && strcmp(argv[3], "full") == 0)
+    else if (strcmp(argv[1], "list") == 0)
     {
         action.get_box_list_full();
     }
@@ -50,7 +42,7 @@ int main(int argc, char *argv[])
 
     else if (strcmp(argv[1], "unpack") == 0 && strcmp(argv[2], "last") == 0)
     {
-        action.pack_last_box();
+        action.set_last_box();
     }
     
     else if (strcmp(argv[1], "unpack") == 0)
@@ -61,10 +53,6 @@ int main(int argc, char *argv[])
             return -1;
         }
         action.set_box(argv[2]);
-    }
-    else if (strcmp(argv[1], "show") == 0 && strcmp(argv[2], "change") == 0)
-    {
-        action.last_change();
     }
     else if (strcmp(argv[1], "delete") == 0 && strcmp(argv[2], "-name") == 0)
     {
@@ -87,6 +75,22 @@ int main(int argc, char *argv[])
     else if (strcmp(argv[1], "delete") == 0 || strcmp(argv[1], "-last") == 0)
     {
         action.delete_last();
+    }
+    else if (strcmp(argv[1], "change") == 0 && strcmp(argv[2], "-dir") == 0)
+    {
+        action.dir_change();
+    }
+    else if (strcmp(argv[1], "change") == 0 && strcmp(argv[2], "-file") == 0)
+    {
+        action.file_change();
+    }
+    else if (strcmp(argv[1], "change") == 0 && strcmp(argv[2], "-data") == 0)
+    {
+        action.data_change();
+    }
+    else if (strcmp(argv[1], "change") == 0 && strcmp(argv[2], "-all") == 0)
+    {
+        action.all_change();
     }
     else
     {

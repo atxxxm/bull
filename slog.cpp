@@ -111,6 +111,39 @@ void LOG::FATAL(std::string str)
     print(COLOR::DARK_RED, "FATAL", str);
 }
 
+void LOG::CUSTOM(std::string color, const char* text, std::string str)
+{
+    if (color == "red")
+    {
+        print(COLOR::RED, text, str);
+    }
+    else if (color == "dark_red")
+    {
+        print(COLOR::DARK_RED, text, str);
+    }
+    else if (color == "green")
+    {
+        print(COLOR::GREEN, text, str);
+    }
+    else if (color == "orange")
+    {
+        print(COLOR::ORANGE, text, str);
+    }
+    else if (color == "blue")
+    {
+        print(COLOR::BLUE, text, str);
+    }
+    else if (color == "purple")
+    {
+        print(COLOR::DARK_RED, text, str);
+    }
+    else if (color == "light_blue")
+    {
+        print(COLOR::LIGHT_BLUE, text, str);
+    }
+   
+}
+
 bool LOG::new_open(std::string filename) 
 {
     file.open(filename);

@@ -11,8 +11,10 @@
 #include <sstream>
 #include <fcntl.h>
 #include <cstdint>
+#include <unordered_set>
 #include "slog.hpp"
 
+//FILES_AND_FOLDERS
 bool files_and_folders::is_bin(const std::string& file)
 {
     int fd = open(file.c_str(), O_RDONLY);
@@ -37,6 +39,8 @@ int files_and_folders::check_bullgnore()
     bullgnore.clear();
     std::ifstream bg(bullgnore_name);
 
+    bullgnore.push_back(".bullgnore");
+
     if (!bg.is_open()) return -1;
 
     std::string line;
@@ -59,42 +63,55 @@ int files_and_folders::dir_list(char *path)
 
     char fullpath[1024];
     struct dirent *d;
-    std::ofstream file(folders_list_name, std::ios::app);
-
-    if (!file.is_open()) return -1;
 
     while ((d = readdir(dir)) != NULL)
     {
         if (strcmp(d->d_name, ".") == 0 || strcmp(d->d_name, "..") == 0 || strcmp(d->d_name, config_folder_name) == 0) continue;
 
-        if (!bullgnore.empty())
+        if (d->d_type == DT_DIR)
         {
-            for (const auto& vec : bullgnore)
+            snprintf(fullpath, sizeof(fullpath), "%s/%s", path, d->d_name);
+            vec_dir_path.push_back(fullpath);
+            dir_list(fullpath);
+        }
+        
+    }
+    closedir(dir);
+
+    return 0;
+}
+
+int files_and_folders::write_dir_list_in_file()
+{
+    if (vec_dir_path.empty()) return -1;
+    
+    if (!bullgnore.empty())
+    {
+        for (int i = 0; i < bullgnore.size(); i++)
+        {
+            for (int j = 0; j < vec_dir_path.size(); j++)
             {
-                if (strcmp(d->d_name, vec.c_str()) != 0)
+                if (bullgnore[i] == vec_dir_path[j])
                 {
-                    if (d->d_type == DT_DIR)
-                    {
-                        snprintf(fullpath, sizeof(fullpath), "%s/%s", path, d->d_name);
-                        file << fullpath << "\n";
-                        dir_list(fullpath);
-                    }
+                    auto it = vec_dir_path.begin() + j;
+                    vec_dir_path.erase(it);
                 }
             }
         }
-        else
-        {
-            if (d->d_type == DT_DIR)
-            {
-                snprintf(fullpath, sizeof(fullpath), "%s/%s", path, d->d_name);
-                file << fullpath << "\n";
-                dir_list(fullpath);
-            }
-        }
     }
-    
-    closedir(dir);
+
+    if (vec_dir_path.empty()) return -1;
+
+    std::ofstream file(folders_list_name);
+
+    for (const auto& vec : vec_dir_path)
+    {
+        file << vec << "\n";
+    }
+
     file.close();
+    vec_dir_path.clear();
+
 
     return 0;
 }
@@ -103,14 +120,8 @@ int files_and_folders::files_list_in_folder()
 {
     std::string line, full;
     std::ifstream folder(folders_list_name);
-    std::ofstream files(files_list_name, std::ios::app);
 
-    if (!folder.is_open() || !files.is_open())
-    {
-        folder.close();
-        files.close();
-        return -1;
-    }
+    if (!folder.is_open()) return -1;
 
     DIR *dir;
     struct dirent *d;
@@ -126,7 +137,7 @@ int files_and_folders::files_list_in_folder()
             if (d->d_type == DT_REG)
             {
                 full = line + "/" + d->d_name;
-                files << full << "\n";
+                vec_file_in_folder_path.push_back(full);
             }
             
         }
@@ -135,7 +146,47 @@ int files_and_folders::files_list_in_folder()
     }
 
     folder.close();
-    files.close();
+
+    return 0;
+}
+
+int files_and_folders::write_files_in_folder_list_in_file()
+{
+    if (vec_file_in_folder_path.empty()) return -1;
+
+    if (!bullgnore.empty())
+    {
+        for (int i = 0; i < bullgnore.size(); i++)
+        {
+            for (int j = 0; j < vec_file_in_folder_path.size(); j++)
+            {
+                if (bullgnore[i] == vec_file_in_folder_path[j])
+                {
+                    auto it = vec_file_in_folder_path.begin() + j;
+                    vec_file_in_folder_path.erase(it);
+                }
+            }
+        }
+    }
+
+    if (vec_file_in_folder_path.empty()) return -1;
+
+    std::ofstream file(files_list_name, std::ios::app);
+
+    if (!file.is_open())
+    {
+        vec_file_in_folder_path.clear();
+        return -1;
+    }
+
+    for (const auto& vec : vec_file_in_folder_path)
+    {
+        file << vec << "\n";
+    }
+
+
+    file.close();
+    vec_file_in_folder_path.clear();
 
     return 0;
 }
@@ -144,9 +195,6 @@ int files_and_folders::files_list()
 {
     DIR *dir = opendir(".");
     struct dirent *d;
-    std::ofstream files(files_list_name);
-
-    if (!files.is_open()) return -1;
 
     while ((d = readdir(dir)) != NULL)
     {
@@ -155,31 +203,86 @@ int files_and_folders::files_list()
 
         if (d->d_type == DT_REG)
         {
-            files << d->d_name  << "\n";
+            vec_file_path.push_back(d->d_name);
         }            
     }
 
     closedir(dir);
-    files.close();
 
     return 0;
 }
 
+int files_and_folders::write_file_list_in_file()
+{
+    if(vec_file_path.empty()) return -1;
+
+    if (!bullgnore.empty())
+    {
+        for (int i = 0; i < bullgnore.size(); i++)
+        {
+            for (int j = 0; j < vec_file_path.size(); j++)
+            {
+                if (bullgnore[i] == vec_file_path[j])
+                {
+                    auto it = vec_file_path.begin() + j;
+                    vec_file_path.erase(it);
+                }
+            }
+        }
+    }
+
+    if(vec_file_path.empty()) return -1;
+
+    std::ofstream file(files_list_name);
+
+    for (const auto& vec : vec_file_path)
+    {
+        file << vec << "\n";
+    }
+
+    file.close();
+    vec_file_path.clear();
+
+    return 0;
+}
+
+
+
+// INIT
 bool _init_::is_BULL()
 {
     return (access(config_folder_name, F_OK) == 0);
 }
 
-int _init_::folder_box_list_create(int id)
+void _init_::fast_collect_data()
+{
+    files_and_folders ff;
+    ff.check_bullgnore();
+
+    ff.dir_list(cur);
+    ff.write_dir_list_in_file();
+
+    ff.files_list();
+    ff.write_file_list_in_file();
+    
+    ff.files_list_in_folder();
+    ff.write_files_in_folder_list_in_file();
+}
+
+int _init_::new_folders_list_name_in_box(int id)
 {
     std::string line, path = std::string(config_folder_name) + "/" + std::to_string(id) + "/" + folders_list_name;
-    std::ofstream folders_path_for_box(path); std::ifstream fold_list;
-    if (!folders_path_for_box.is_open()) return -1;
+    std::ofstream folders_path_for_box; std::ifstream fold_list;
 
     fold_list.open(folders_list_name);
-    if (!fold_list.is_open())
+
+    if (!fold_list.is_open()) return -1;
+
+    folders_path_for_box.open(path);
+
+    if (!folders_path_for_box.is_open())
     {
-        folders_path_for_box.close();
+        fold_list.close();
         return -1;
     }
 
@@ -194,16 +297,20 @@ int _init_::folder_box_list_create(int id)
     return 0;
 }
 
-int _init_::files_box_list_create(int id)
+int _init_::new_files_box_list_in_box(int id)
 {
     std::string line, path = std::string(config_folder_name) + "/" + std::to_string(id) + "/" + files_list_name;
-    std::ofstream files_path_for_box(path); std::ifstream file_list;
-    if (!files_path_for_box.is_open()) return -1;
+    std::ofstream files_path_for_box; std::ifstream file_list;
 
     file_list.open(files_list_name);
-    if (!file_list.is_open())
+
+    if (!file_list.is_open()) return -1;
+
+    files_path_for_box.open(path);
+
+    if (!files_path_for_box.is_open())
     {
-        files_path_for_box.close();
+        file_list.close();
         return -1;
     }
 
@@ -218,32 +325,35 @@ int _init_::files_box_list_create(int id)
     return 0;
 }
 
-int _init_::create_folders_at_bull(int id)
+int _init_::create_folders_at_box(int id)
 {
     std::ifstream folders(folders_list_name);
-    std::string line, fullpath;
+    std::string line, fullpath, path = std::string(config_folder_name) + "/" + std::to_string(id) + "/";
 
     if (!folders.is_open()) return -1;
 
     while (std::getline(folders, line))
     {
-        fullpath = std::string(config_folder_name) + "/" + std::to_string(id) + "/" + line;
+        fullpath =  path + line;
         mkdir(fullpath.c_str(), 0777);
     }
 
     folders.close();
 
-    folder_box_list_create(id);
+    if (new_folders_list_name_in_box(id) == 0)
+    {
+        remove(folders_list_name.c_str());
+    }
 
-    remove(folders_list_name.c_str());
     return 0;   
 }
 
-int _init_::create_files_at_bull(int id)
+int _init_::create_files_at_box(int id)
 {
-    std::string line, text;
+    std::string line, text, path = std::string(config_folder_name) + "/" + std::to_string(id) + "/";
     std::ifstream read_file, read_data_file; std::ofstream write_file;
     read_file.open(files_list_name);
+    
     if (!read_file.is_open()) return -1;
 
     while (std::getline(read_file, line))
@@ -251,7 +361,7 @@ int _init_::create_files_at_bull(int id)
         read_data_file.open(line);
         if (!read_data_file.is_open()) continue;
 
-        write_file.open(".bull/" + std::to_string(id) + "/" + line);
+        write_file.open(path + line);
         if (!write_file.is_open())
         {
             read_data_file.close();
@@ -270,9 +380,10 @@ int _init_::create_files_at_bull(int id)
 
     read_file.close();
 
-    files_box_list_create(id);
-
-    remove(files_list_name.c_str());
+    if (new_files_box_list_in_box(id) == 0)
+    {
+        remove(files_list_name.c_str());
+    }
 
     return 0;
 
@@ -288,9 +399,9 @@ int _init_::generate_id()
     return dist(gen);
 }
 
-int _init_::create_box(int id, char *name)
+int _init_::create_new_box(int id, char *name)
 {
-    std::ofstream box(".bull/" + box_list_name, std::ios::app);
+    std::ofstream box(std::string(config_folder_name) + "/" + box_list_name, std::ios::app);
 
     if (!box.is_open()) return -1;
 
@@ -298,7 +409,7 @@ int _init_::create_box(int id, char *name)
 
     box.close();
 
-    std::string fullpath = config_folder_name + std::string("/") + std::to_string(id);
+    std::string fullpath = std::string(config_folder_name) + "/" + std::to_string(id);
 
     mkdir(fullpath.c_str(), 0777);
 
@@ -316,7 +427,7 @@ int _init_::create_folder_for_init()
 
     logger.INFO("The project has been initiated!");
 
-    std::ofstream box(config_folder_name + std::string("/") + box_list_name);
+    std::ofstream box(std::string(config_folder_name) + "/" + box_list_name);
 
     if (!box.is_open()) return -1;
 
@@ -326,49 +437,59 @@ int _init_::create_folder_for_init()
 
 int _init_::add_project(char *folder_name)
 {
-    files_and_folders ff;
-    if (is_BULL())
-    {
-        files_and_folders ff;
-        ff.check_bullgnore();
-        char start[1] = {'.'};
-        ff.dir_list(start);
-
-        ff.files_list();
-        ff.files_list_in_folder();
-
-        int id  = generate_id();
-
-        create_box(id, folder_name);
-
-        create_folders_at_bull(id);
-        create_files_at_bull(id);
-
-        logger.INFO_NE("The packing '%s' was successful!", folder_name);
-    }
-    else
+    if (!is_BULL())
     {
         logger.INFO("Your project has not been initialized!");
+        return -1;
     }
-    
+
+    fast_collect_data();
+
+    int id  = generate_id();
+
+    create_new_box(id, folder_name);
+
+    create_folders_at_box(id);
+    create_files_at_box(id);
+
+    logger.INFO_NE("The packing '%s' was successful!", folder_name);
 
     return 0;
 }
 
 int _init_::gnore()
 {
-    std::ofstream gr(bullgnore_name);
-    gr.close();
-
+    std::ofstream gr(bullgnore_name); gr.close();
     logger.INFO("bullgnore has been successfully created!");
 
     return 0;
 }
 
 
+//ACTION
 bool _action_::is_BULL() 
 {  
     return (access(config_folder_name, F_OK) == 0); 
+}
+
+bool _action_::is_DIR(std::string dir)
+{
+    return (access(dir.c_str(), F_OK) == 0);
+}
+
+void _action_::fast_collect_data()
+{
+    files_and_folders ff;
+    ff.check_bullgnore();
+
+    ff.dir_list(cur);
+    ff.write_dir_list_in_file();
+
+    ff.files_list();
+    ff.write_file_list_in_file();
+    
+    ff.files_list_in_folder();
+    ff.write_files_in_folder_list_in_file();
 }
 
 bool _action_::is_box_list()
@@ -381,8 +502,8 @@ bool _action_::is_box_list()
 
 int _action_::name_to_id(char *name)
 {
-    struct box_list { std::string id; std::string name; };
-    std::string line, word, list[3] = {0};
+    struct box_list { std::string id; std::string label; };
+    std::string line, word, list[3];
     std::vector<box_list> bl;
     int i = 0;
 
@@ -410,303 +531,11 @@ int _action_::name_to_id(char *name)
 
     for (const auto& vec : bl)
     {
-        if (vec.name == std::string(name))
+        if (vec.label == std::string(name))
         {
             return atoi(vec.id.c_str());
         }
     }
-
-    return 0;
-}
-
-void _action_::collect_data_about_files()
-{
-    files_and_folders ff;
-    char path[1] = {'.'};
-    ff.dir_list(path);
-    ff.files_list();
-    ff.files_list_in_folder();
-}
-
-void _action_::del_current_files_at_dir()
-{
-    std::ifstream def(files_list_name);
-    std::string line;
-
-    while (std::getline(def, line))
-    {
-        remove(line.c_str());
-    }
-
-    def.close();
-    def.open(folders_list_name);
-
-    while (std::getline(def, line))
-    {
-        remove(line.c_str());
-    }
-
-    def.close();
-
-    remove(files_list_name.c_str());
-    remove(folders_list_name.c_str());
-}
-
-int _action_::comparing_folders_changes(std::string path)
-{
-    files_and_folders ff;
-    std::vector<std::string> old_f;
-    std::vector<std::string> new_f;
-    std::string line;
-    std::ifstream read_f(path);
-
-    if (!read_f.is_open()) return -1;
-
-    while (std::getline(read_f, line))
-    {
-        old_f.push_back(line);
-    }
-
-    read_f.close();
-    char cur[1] = {'.'};
-    ff.dir_list(cur);
-
-    read_f.open(folders_list_name);
-
-    if (!read_f.is_open()) return -1;
-
-    while (std::getline(read_f, line))
-    {
-        for (int i = 0; i < old_f.size(); i++)
-        {
-            if (old_f[i] == line)
-            {
-                auto it = old_f.begin() + i;
-                old_f.erase(it);
-            }
-        }
-
-        new_f.push_back(line);
-    }
-
-    read_f.close();
-
-    if (!read_f.is_open()) return -1;
-
-    while (std::getline(read_f, line))
-    {
-        for (int i = 0; i < new_f.size(); i++)
-        {
-            if (new_f[i] == line)
-            {
-                auto it = new_f.begin() + i;
-                new_f.erase(it);
-            }
-        }
-    }
-
-    read_f.close();
-
-    if (old_f.empty() && new_f.empty()) return -1;
-
-    std::cout << "FOLDERS:\n";
-    if (!old_f.empty())
-    {
-        for (const auto& of : old_f)
-        {
-            std::cout << "[DEL] "<< of << "\n";
-        }
-
-        std::cout << "\n";
-    }   
-    
-    if (!new_f.empty())
-    {
-
-        std::cout << ":" << "\n";
-
-        for (const auto& nf : new_f)
-        {
-            std::cout << "[NEW] " << nf << "\n";
-        }
-    }
-
-    return 0;
-}
-
-int _action_::comparing_file_changes(std::string path)
-{
-    files_and_folders ff;
-    std::vector<std::string> old_f;
-    std::vector<std::string> new_f;
-    std::string line;
-    std::ifstream read_f(path);
-
-    if (!read_f.is_open()) return -1;
-
-    while (std::getline(read_f, line))
-    {
-        old_f.push_back(line);
-    }
-
-    read_f.close();
-
-    ff.files_list();
-    ff.files_list_in_folder();
-
-    read_f.open(files_list_name);
-
-    if (!read_f.is_open()) return -1;
-
-    while (std::getline(read_f, line))
-    {
-        for (int i = 0; i < old_f.size(); i++)
-        {
-            if (old_f[i] == line)
-            {
-                auto it = old_f.begin() + i;
-                old_f.erase(it);
-            }
-        }
-
-        new_f.push_back(line);
-    }
-
-    read_f.close();
-
-    read_f.open(path);
-
-    if (!read_f.is_open()) return -1;
-
-    while (std::getline(read_f, line))
-    {
-        for (int i = 0; i < new_f.size(); i++)
-        {
-            if (new_f[i] == line)
-            {
-                auto it = new_f.begin() + i;
-                new_f.erase(it);
-            }
-        }
-    }
-
-    read_f.close();
-
-    if (old_f.empty() && new_f.empty()) return -1;
-
-    std::cout << "FILES:\n";
-
-    if (!old_f.empty())
-    {
-        for (const auto& of : old_f)
-        {
-            std::cout << "[DEL] " << of << "\n";
-        }
-
-        std::cout << "\n";
-    }
-
-    if (!new_f.empty())
-    {
-        for (const auto& nf : new_f)
-        {
-            std::cout << "[NEW] " << nf << "\n";
-        }
-    }
-
-    return 0;
-
-}
-
-int _action_::comparison_of_changes_data_files(std::string id)
-{
-    files_and_folders ff;
-    std::vector<std::string> save_vec;
-    std::vector<std::string> current_vec;
-    std::ifstream file_list, r_save, r_current;
-    std::string current, save, filename;
-
-    file_list.open(files_list_name);
-
-    if (!file_list.is_open()) return -1;
-
-    while (std::getline(file_list, filename))
-    {
-        r_save.open(".bull/" + id + "/" + filename);
-        r_current.open(filename);
-        save_vec.clear();
-        current_vec.clear();
-
-        if (!r_save.is_open() || !r_current.is_open() || ff.is_bin(filename)) continue;
-
-        while (std::getline(r_save, save))
-        {
-            if (save == "" || save == "\n") continue;
-
-            save_vec.push_back(save);
-        }
-
-        while (std::getline(r_current, current))
-        {
-            if (current == "" || save == "\n") continue;
-
-            current_vec.push_back(current);
-        }
-
-        r_save.close();
-        r_current.close();
-
-        r_save.open(".bull/" + id + "/" + filename);
-        r_current.open(filename);
-        
-        while (std::getline(r_current, current))
-        {
-            if (current == "" || current == "\n") continue;
-
-            for (int i = 0; i < save_vec.size(); i++)
-            {
-                if (save_vec[i] == current)
-                {
-                    auto it = save_vec.begin() + i;
-                    save_vec.erase(it);
-                }
-            }
-        }
-        
-        while (std::getline(r_save, save))
-        {
-            if (save == "" || save == "\n") continue;
-
-            for (int i = 0; i < current_vec.size(); i++)
-            {
-                if (current_vec[i] == save)
-                {
-                    auto it = current_vec.begin() + i;
-                    current_vec.erase(it);
-                }
-            }
-        }      
-
-        if (save_vec.empty() || current_vec.empty()) continue;
-
-        std::cout << filename << ":" << "\n";
-
-        for (const auto& sv : save_vec)
-        {
-            std::cout << "[DEL] " << sv << "\n";
-        }
-        std::cout << "\n\n";
-        for (const auto& cv : current_vec)
-        {
-            std::cout << "[ADD] " << cv << "\n";
-        }
-
-        r_save.close();
-        r_current.close();
-        std::cout << "\n";
-    }
-
-    file_list.close();
 
     return 0;
 }
@@ -733,37 +562,74 @@ std::string _action_::get_last_id()
     return format_str;
 }
 
+void _action_::delete_data_in_projects()
+{
+    std::ifstream data;
+    std::string line;
+
+    data.open(files_list_name);
+
+    if (data.is_open())
+    {
+        while (std::getline(data, line))
+        {
+            remove(line.c_str());
+        }
+    
+        data.close();
+    }
+
+    data.open(folders_list_name);
+
+    if (data.is_open())
+    {
+        while (std::getline(data, line))
+        {
+            remove(line.c_str());
+        }
+        
+        data.close();
+    }
+
+    remove(files_list_name.c_str());
+    remove(folders_list_name.c_str());
+}
+
 int _action_::delete_box(std::string path)
 {
-    std::string line, full_path;
-    std::ifstream read_file(path + "/" + files_list_name);
+    std::string line, full_path, path_list;
+    std::ifstream read_file;
 
-    if (!read_file.is_open()) return -1;
+    path_list = path + "/" + files_list_name;
+    read_file.open(path_list);
 
-    while (std::getline(read_file, line))
+    if (read_file.is_open())
     {
-        full_path = path + "/" + line;
-        remove(full_path.c_str());
+        while (std::getline(read_file, line))
+        {
+            full_path = path + "/" + line;
+            remove(full_path.c_str());
+        }
+
+        read_file.close();
+        remove(path_list.c_str());
     }
 
-    read_file.close();
+    path_list = path + "/" + folders_list_name;
+    read_file.open(path_list);
 
-    read_file.open(path + "/" + folders_list_name);
-
-    if (!read_file.is_open()) return -1;
-
-    while (std::getline(read_file, line))
+    if (read_file.is_open())
     {
-        full_path = path + "/" + line;
-        remove(full_path.c_str());
+        while (std::getline(read_file, line))
+        {
+            full_path = path + "/" + line;
+            remove(full_path.c_str());
+        }
+    
+        read_file.close();
+        remove(path_list.c_str());
     }
 
-    read_file.close();
-
-    full_path = path + "/" + files_list_name;
-    remove(full_path.c_str());
-    full_path = path + "/" + folders_list_name;
-    remove(full_path.c_str());
     remove(path.c_str());
 
     return 0;
@@ -776,11 +642,7 @@ int _action_::get_line_where_id(std::string id)
     std::ifstream r(std::string(config_folder_name) + "/" + box_list_name);
     int count_line = 0;
 
-    if (!r.is_open())
-    {
-        std::cout << "no open!\n";
-        return -1;
-    }
+    if (!r.is_open()) return -1;
 
     while (std::getline(r, line))
     {
@@ -802,70 +664,13 @@ int _action_::get_line_where_id(std::string id)
     return 0;
 }
 
-void _action_::get_box_list_name()
-{
-    if (!is_BULL() || !is_box_list()) return;
-
-    std::string line, full;
-    int i = 0, num = 1;
-
-    std::fstream r(std::string(config_folder_name) + "/" + box_list_name);
-
-    while (std::getline(r, line))
-    {
-        full += line + "\n";
-    }
-    
-    r.close();
-
-    std::stringstream ss(full);
-
-    std::cout << "\t\t\t[BOX LIST]\n";
-    while (ss >> line)
-    {
-        i++;
-        if (i == 3)
-        {
-            std::cout << num++ << ": "<< line << "\n";
-            i = 0;
-        }
-    }
-}
-
-void _action_::get_box_list_id()
-{
-    if (!is_BULL() || !is_box_list()) return;
-
-    std::string line, full;
-    int i = 0, num = 1;
-
-    std::fstream r(std::string(config_folder_name) + "/" + box_list_name);
-
-    while (std::getline(r, line))
-    {
-        full += line + "\n";
-    }
-    
-    r.close();
-
-    std::stringstream ss(full);
-
-    std::cout << "\t\t\t[BOX LIST]\n";
-
-    while (ss >> line)
-    {
-        if (i == 0)
-        {
-            std::cout << num++ << ": "<< line << "\n";
-            i = 0;
-        }
-        i++;
-    }
-}
-
 void _action_::get_box_list_full()
 {
-    if (!is_BULL() || !is_box_list()) return;
+    if (!is_BULL() || !is_box_list())
+    {
+        logger.INFO("Your project has not been initialized!");
+        return;
+    }
 
     std::string line;
     int num = 1;
@@ -882,322 +687,326 @@ void _action_::get_box_list_full()
     r.close();
 }
 
+void _action_::set(std::string id)
+{
+    fast_collect_data();
+    delete_data_in_projects();
+    
+    std::string line, line2;
+    std::ifstream data, read_file; std::ofstream write_file;
+
+    data.open(std::string(config_folder_name) + "/" + id + "/" + folders_list_name);
+
+    if (data.is_open())
+    {
+        while (std::getline(data, line))
+        {
+            mkdir(line.c_str(), 0777);
+        }
+
+        data.close();
+    }
+
+    data.open(std::string(config_folder_name) + "/" + id + "/" + files_list_name);
+
+    if (data.is_open())
+    {
+        while (std::getline(data, line))
+        {
+            read_file.open(std::string(config_folder_name) + "/" + id + "/" + line);
+            if (!read_file.is_open()) continue;
+            write_file.open(line);
+    
+            while (std::getline(read_file, line2))
+            {
+                write_file << line2 << "\n";
+            }
+    
+            read_file.close();
+            write_file.close();
+        }
+        
+        data.close();
+    }
+
+    logger.INFO_NE("The box '%s' has been successfully unpacked", id.c_str());
+}
+
 void _action_::set_box_id(char *str_id)
 {
     int id = atoi(str_id);
 
-    std::string line, line2;
-    std::ifstream folder_list(std::string(config_folder_name) + "/" + std::to_string(id) + "/" + folders_list_name);
-
-    if (!folder_list.is_open())
+    if (!is_DIR(std::string(config_folder_name) + "/" + std::to_string(id)))
     {
         logger.ERROR("There is no box with this id!");
         return;
-    }
+    };
 
-    collect_data_about_files();
-    del_current_files_at_dir();
-
-    while (std::getline(folder_list, line))
-    {
-        mkdir(line.c_str(), 0777);
-    }
-
-    folder_list.close();
-
-    std::ifstream file_list(std::string(config_folder_name) + "/" + std::to_string(id) + "/" + files_list_name);
-    std::ifstream read_file;
-    std::ofstream write_file;
-
-    while (std::getline(file_list, line))
-    {
-        read_file.open(std::string(config_folder_name) + "/" + std::to_string(id) + "/" + line);
-        write_file.open(line);
-
-        while (std::getline(read_file, line2))
-        {
-            write_file << line2 << "\n";
-        }
-
-        read_file.close();
-        write_file.close();
-    }
-
-    file_list.close();
-
-    logger.INFO_NE("The box '%d' has been successfully unpacked", id);
+    set(std::to_string(id));
 }
 
 void _action_::set_box(char *name)
 {
     int id = name_to_id(name);
 
-    std::string line, line2;
-    std::ifstream folder_list(std::string(config_folder_name) + "/" + std::to_string(id) + "/" + folders_list_name);
-
-    if (!folder_list.is_open())
+    if (!is_DIR(std::string(config_folder_name) + "/" + std::to_string(id)))
     {
         logger.ERROR("There is no box with that name!");
         return;
     }
 
-    collect_data_about_files();
-    del_current_files_at_dir();
-
-    while (std::getline(folder_list, line))
-    {
-        mkdir(line.c_str(), 0777);
-    }
-
-    folder_list.close();
-
-    std::ifstream file_list(std::string(config_folder_name) + "/" + std::to_string(id) + "/" + files_list_name);
-    std::ifstream read_file;
-    std::ofstream write_file;
-
-    while (std::getline(file_list, line))
-    {
-        read_file.open(std::string(config_folder_name) + "/" + std::to_string(id) + "/" + line);
-        write_file.open(line);
-
-        while (std::getline(read_file, line2))
-        {
-            write_file << line2 << "\n";
-        }
-
-        read_file.close();
-        write_file.close();
-    }
-
-    file_list.close();
-
-    logger.INFO_NE("The box '%s' has been successfully unpacked", name);
+    set(std::to_string(id));
 }
 
-void _action_::pack_last_box()
+void _action_::set_last_box()
 {
     std::string id = get_last_id();
 
-    std::string line, line2;
-    std::ifstream folder_list(std::string(config_folder_name) + "/" + id + "/" + folders_list_name);
-
-    if (!folder_list.is_open()) return;
-
-    collect_data_about_files();
-    del_current_files_at_dir();
-
-    while (std::getline(folder_list, line))
+    if (id == "")
     {
-        mkdir(line.c_str(), 0777);
+        logger.ERROR("You don't have any boxes!");
+        return;
     }
 
-    folder_list.close();
+    set(id);
+}
 
-    std::ifstream file_list(std::string(config_folder_name) + "/" + id + "/" + files_list_name);
-    std::ifstream read_file;
-    std::ofstream write_file;
+void _action_::update_box_list(std::string id)
+{
+    std::string line, text = "", path = std::string(config_folder_name) + "/" + box_list_name;
+    int pos = get_line_where_id(id), i = 0;
+    if (pos == 0 || pos == -1) return;
 
-    while (std::getline(file_list, line))
+    std::ifstream data(path);
+    std::ofstream new_write;
+    if (!data.is_open()) return;
+
+    while (std::getline(data, line))
     {
-        read_file.open(std::string(config_folder_name) + "/" + id + "/" + line);
-        write_file.open(line);
-
-        while (std::getline(read_file, line2))
-        {
-            write_file << line2 << "\n";
-        }
-
-        read_file.close();
-        write_file.close();
+        i++;
+        if (i == pos) continue;
+        text += line +  "\n";
     }
+    data.close();
 
-    file_list.close();
+    new_write.open(path);
 
-    logger.INFO("The last box has been successfully unpacked");
+    new_write << text;
+
+    new_write.close();
 }
 
 void _action_::delete_last()
 {
-    std::ifstream check(std::string(config_folder_name) + "/" + box_list_name);
+    std::string id = get_last_id();
+    std::string path = std::string(config_folder_name) + "/" + id;
 
-    if (!check.is_open())
+    if (!is_DIR(path))
     {
-        logger.ERROR("The project has not been initialized!");
+        logger.ERROR("You don't have a single box!");
         return;
     }
-
-    check.close();
-
-    std::string id = get_last_id();
-    std::string path = std::string(config_folder_name) + "/" + id, str, _str_;
-    int i = 0;
 
     delete_box(path);
+    update_box_list(id);
 
-    int line = get_line_where_id(id);
-
-    if (line == 0 || line == -1)
-    {
-        logger.ERROR("Not a single box was found!");
-        return;
-    }
-
-    std::ifstream read_(std::string(config_folder_name) + "/" + box_list_name);
-
-    if (!read_.is_open()) return;
-
-    while (std::getline(read_, _str_))
-    {
-        i++;
-        if (i == line) continue;
-        str += _str_ + "\n";
-    }
-
-    read_.close();
-    
-    std::ofstream write_(std::string(config_folder_name) + "/" + box_list_name);
-
-    if (!write_.is_open()) return;
-
-    write_ << str;
-
-    write_.close();
-
-    logger.INFO("The last box was successfully deleted!");
-    
+    logger.INFO("The box was successfully deleted!");
 }
 
 void _action_::delete_name(char *name)
 {
-    std::ifstream check(std::string(config_folder_name) + "/" + box_list_name);
+    int id = name_to_id(name);
+    
+    std::string path = std::string(config_folder_name) + "/" + std::to_string(id);
 
-    if (!check.is_open())
+    if (!is_DIR(path)) 
     {
-        logger.ERROR("The project has not been initialized!");
+        logger.ERROR("There is no box with that name!");
         return;
     }
-
-    check.close();
-
-    int id_ = name_to_id(name);
-    std::string id = std::to_string(id_);
-    std::string path = std::string(config_folder_name) + "/" + id, str, _str_;
-    int i = 0;
 
     delete_box(path);
+    update_box_list(std::to_string(id));
 
-    int line = get_line_where_id(id);
-
-    if (line == 0 || line == -1)
-    {
-        logger.ERROR("Not a single box was found!");
-        return;
-    }
-
-    std::ifstream read_(std::string(config_folder_name) + "/" + box_list_name);
-
-    if (!read_.is_open()) return;
-
-    while (std::getline(read_, _str_))
-    {
-        i++;
-        if (i == line) continue;
-        str += _str_ + "\n";
-    }
-
-    read_.close();
-    
-    std::ofstream write_(std::string(config_folder_name) + "/" + box_list_name);
-
-    if (!write_.is_open()) return;
-
-    write_ << str;
-
-    write_.close();
-
-    logger.INFO("The box by name was successfully deleted!");
-    
+    logger.INFO("The box was successfully deleted!");
 }
 
 void _action_::delete_id(char *id_)
 {
-    std::ifstream check(std::string(config_folder_name) + "/" + box_list_name);
+    std::string id = std::string(id_);
+    std::string path = std::string(config_folder_name) + "/" + id;
 
-    if (!check.is_open())
+    if (!is_DIR(path))
     {
-        logger.ERROR("The project has not been initialized!");
+        logger.ERROR("There is no box with such an ID!");
         return;
     }
-
-    check.close();
-
-    std::string id = std::string(id_);
-    std::string path = std::string(config_folder_name) + "/" + id, str, _str_;
-    int i = 0;
 
     delete_box(path);
+    update_box_list(id);
 
-    int line = get_line_where_id(id);
-
-    if (line == 0 || line == -1)
-    {
-        logger.ERROR("Not a single box was found!");
-        return;
-    }
-
-    std::ifstream read_(std::string(config_folder_name) + "/" + box_list_name);
-
-    if (!read_.is_open()) return;
-
-    while (std::getline(read_, _str_))
-    {
-        i++;
-        if (i == line) continue;
-        str += _str_ + "\n";
-    }
-
-    read_.close();
-    
-    std::ofstream write_(std::string(config_folder_name) + "/" + box_list_name);
-
-    if (!write_.is_open()) return;
-
-    write_ << str;
-
-    write_.close();
-
-    logger.INFO("The ID box has been successfully deleted!");
-    
+    logger.INFO("The box was successfully deleted!");
 }
 
-void _action_::last_change()
+void _action_::changes(std::string type_file, int mode)
 {
-    if (!is_BULL())
+    std::string id, path, line;
+    id = get_last_id();
+    path = std::string(config_folder_name) + "/" + id;
+    std::vector<std::string> save_box;
+    std::vector<std::string> current_box;
+    std::ifstream read_box;
+    files_and_folders ff;
+
+    if(!is_DIR(path)) { logger.ERROR("You don't have any boxes!"); return; }
+
+    read_box.open(path + "/" + type_file);
+
+    if (read_box.is_open())
     {
-        logger.ERROR("The project has not been initialized");
+        while (std::getline(read_box, line))
+        {
+            save_box.push_back(line);
+        }
+
+        read_box.close();
+    }
+
+    if (mode == 0)
+    {
+        ff.dir_list(cur);
+        ff.write_dir_list_in_file();    
+    }
+    else if (mode == 1)
+    {
+        ff.files_list();
+        ff.write_file_list_in_file();
+        ff.files_list_in_folder();
+        ff.write_files_in_folder_list_in_file();
+    }
+   
+    read_box.open(type_file);
+
+    if (read_box.is_open())
+    {
+        while (std::getline(read_box, line))
+        {
+            current_box.push_back(line);
+        }
+        read_box.close();
+    }
+
+    if (current_box.empty() && save_box.empty()) return;
+
+    else if (current_box.empty())
+    {
+        for (const auto& vec : save_box)
+        {
+            logger.CUSTOM("dark_red", "DEL", vec);
+        }
+        save_box.clear();
+        remove(type_file.c_str());
+        return;
+    }
+    else if (save_box.empty())
+    {
+        for (const auto& vec : current_box)
+        {
+            logger.CUSTOM("green", "NEW", vec);
+        }
+        current_box.clear();
+        remove(type_file.c_str());
         return;
     }
 
-    if (!is_box_list())
+    std::unordered_set<std::string> save_set(save_box.begin(), save_box.end());
+    std::unordered_set<std::string> current_set(current_box.begin(), current_box.end());
+
+    if (save_set.empty() && current_set.empty()) return;
+
+    for (const auto& item : save_set)
     {
-        logger.ERROR("Not box has been added!");
+        if (current_set.find(item) == current_set.end())
+        {
+            logger.CUSTOM("dark_red", "DEL", item);
+        }
     }
 
-    std::string id = get_last_id();
-
-    if (id == " ") return;
-
-    if (comparing_folders_changes(".bull/" + id + "/.___folders_list___") == 0)
+    for (const auto& item : current_set)
     {
-        std::cout << "----------------------------------" << "\n";
+        if (save_set.find(item) == save_set.end())
+        {
+            logger.CUSTOM("green", "NEW", item);
+        }
     }
-    if (comparing_file_changes(".bull/" + id + "/.___files_list___") == 0)
+    remove(type_file.c_str());
+}
+
+void _action_::dir_change()
+{
+    std::cout << "FOLDER:\n";
+    changes(folders_list_name, 0);
+}
+
+void _action_::file_change()
+{
+    std::cout << "FILES:\n";
+    changes(files_list_name, 1);
+}
+
+void _action_::data_change()
+{
+    std::string id, path, file, old_line, new_line;
+    id = get_last_id();
+    path = std::string(config_folder_name) + "/" + id;
+    std::ifstream new_file, old_file, list;
+
+    if (!is_DIR(path)) { logger.ERROR("You don't have any boxes!"); return; }
+
+    list.open(path + "/" + files_list_name);
+
+    if (!list.is_open()) { logger.WARNING("You don't have any saved files to compare.!"); return; } 
+
+    while (std::getline(list, file))
     {
-        std::cout << "----------------------------------" << "\n";
+        old_file.open(path + "/" + file);
+        new_file.open(file);
+
+        if (!new_file.is_open() || !old_file.is_open()) continue;
+
+        std::cout << file << ":\n";
+        while(std::getline(old_file, old_line))
+        {
+            while (std::getline(new_file, new_line))
+            {
+                if (new_line != old_line)
+                {
+                    if (new_line == "" && old_line != "")
+                    {
+                        logger.CUSTOM("red", "DEL", old_line);
+                    }
+                    else if (old_line == "" && new_line != "")
+                    {
+                        logger.CUSTOM("green", "NEW", new_line);
+                    }
+                    else if (old_line != "" && new_line != "")
+                    {
+                        logger.CUSTOM("green", "NEW", new_line);
+                    }
+                }
+            }   
+        }
+        old_file.close();
+        new_file.close();
     }
 
-    comparison_of_changes_data_files(id);
+    list.close();
+}
 
-    remove(folders_list_name.c_str());
-    remove(files_list_name.c_str());
+void _action_::all_change()
+{
+    std::cout << "ALL:\n";
+    dir_change();
+    file_change();
+    data_change();
 }
