@@ -1,396 +1,150 @@
-# ENG
-# Documentation for the Bull version control system
+# EN
+Bull is a simple version control system.
 
-## Introduction
+## Commands
 
-Bull is a simple version control system implemented in C++ for project management via the command line. It allows you to initialize projects, create "boxes" for storing versions of files and folders, unpack them, delete them, and track changes in files and directories.
+### `init`
+Initializes a new Bull repository in the current directory. Creates the `.bull` directory, configures the base branch, and initializes the configuration files.
 
-## Installation
+**Usage**: `bull init`
 
-1. **Requirements**:
-- C++ compiler (supporting the C++11 or higher standard).
-   - Linux-based OS
+### `add`
+Adds all non-ignored files in the current directory to the index for the next commit. Files specified in `.bullgnore' are excluded.
 
-2. **Build**:
-- Make a file install.sh executed using the command: `chmod +x install.sh `
-   - Run the file install.sh using the command: `./install.sh `
+**Usage**: `bull add`
 
-## Usage
+### `gnore`
+Creates an empty `.bullgnore` file in the current directory to specify files or templates that Bull should ignore.
 
-Bull supports the following commands, which are passed through command line arguments:
+**Usage**: `bull gnore`
 
-### 1. Initializing the project (`init`)
-Creates a '.bull` folder to store configuration and version data.
+### `new <branch name>`
+Creates a new branch with the specified name. The branch is added to the list of repository branches.
 
-```bash
-./bull init
-```
+**Usage**: `bull new <branch name>`
 
-- **Description**: Initializes a new project by creating a `.bull` directory.
+### `branch`
+Displays a list of all branches in the repository.
 
-### 2. Creating a new version (`pack`)
-Collects files and folders from the current directory into a new "box" with a unique identifier and name.
+**Usage**: `bull branch`
 
-```bash
-./bull pack <box_name>
-```
+### `status`
+Shows the current branch, language settings, and changes in the working directory (added, modified, or deleted files). Compares the working directory with the last commit.
 
-- **Description**: Creates a new version of the project, saving files and folders (except those ignored in `.bullgnore`).
-- **Parameters**:
-- `<box_name>`: The name of the box (cannot be empty).
+**Usage**: `bull status`
 
-### 3. Creating a ignore file (`gnore')
-Creates a '.bullgnore` file to specify files and folders that should be ignored during packaging.
+### `lang <language>`
+Changes the language of Bull messages. Supported languages: `ru` (Russian) and `en` (English).
 
-```bash
-./bull gnore
-```
+**Usage**: `bull lang <en|en>`
 
-- **Description**: Creates an empty `.bullgnore` file in the current directory.
+### `pack <commit message>`
+Creates a new commit with the specified message. If the message ends with `.txt', the contents of the specified text file are used as the commit message.
 
-### 4. List of boxes (`list`)
-Displays a list of all boxes with their IDs and names.
+**Usage**: `bull pack <commit message>`
 
-```bash
-./bull list
-```
+### `unpack <hash_commit>`
+Restores files from the specified commit (by hash) to the working directory.
 
-- **Result**: A list of boxes is displayed, for example:
-``
-  [BOX LIST]
-  1: 1234567 - my_project
-  2: 2345678 - another_project
-  ```
+**Usage**: `bull unpack <hash_commit>`
 
-###5. Unpacking the box (`unpack`)
-Restores files and folders from the specified box to the current directory.
+### `log`
+Displays the commit history for the current branch. Outputs the hash and message of each commit.
 
-#### By the name of the box
-```bash
-./bull unpack <box_name>
-```
+**Usage**: `bull log`
 
-- **Description**: Unpacks the box with the specified name.
-- **Parameters**:
-- `<box_name>`: The name of the box.
+### `set <branch name>`
+Switches the current branch to the specified one.
 
-#### By Box ID
-```bash
-./bull unpack -id <box_id>
-```
+**Usage**: `bull set <branch name>`
 
-- **Description**: Unpacks the box with the specified ID.
-- **Parameters**:
-- `<box_id>`: The unique identifier of the box.
+### `remove -b <branch name>`
+Deletes the specified branch.
 
-#### The last box
-```bash
-./bull unpack last
-```
+**Usage**: `bull remove -b <branch name>`
 
-- **Description**: Unpacks the last created box.
+### `remove -c <hash_commit>`
+Deletes the commit with the specified hash from the current branch.
 
-### 6. Deleting a box (`delete')
+**Usage**: `bull remove -c <hash_commit>`
 
-#### By the name of the box
-```bash
-./bull delete -name <box_name>
-```
+### `reset`
+Restores the working directory to the state of the last commit in the current branch.
 
-- **Description**: Deletes the box with the specified name.
-- **Parameters**:
-- `<box_name>`: The name of the box.
-
-#### By Box ID
-```bash
-./bull delete -id <box_id>
-```
-
-- **Description**: Deletes the box with the specified ID.
-- **Parameters**:
-- `<box_id>`: The unique identifier of the box.
-
-#### The last box
-```bash
-./bull delete -last
-```
-
-- **Description**: Deletes the last created box.
-
-### 7. Tracking changes (`change')
-
-#### Folder changes
-```bash
-./bull change -dir
-```
-
-- **Description**: Compares the current folders with the folders in the last box and displays the differences (added or deleted folders).
-
-#### Changes to files
-```bash
-./bull change -file
-```
-
-- **Description**: Compares the current files with the files in the last box and displays the differences (added or deleted files).
-
-#### Changes in file contents
-```bash
-./bull change -data
-```
-
-- **Description**: Compares the contents of the files in the current directory with the contents of the files in the last box.
-
-#### All changes
-```bash
-./bull change -all
-```
-
-- **Description**: Performs a comparison of folders, files, and their contents.
-
-## Usage example
-
-1. Initialization of the project:
-   ```bash
-   ./bull init
-   ```
-
-2. Creating the `.bullgnore` file:
-``bash
-./bull gnore
-   echo "node_modules" > .bullgnore
-   ```
-
-3. Packing the project in a box:
-   ```bash
-   ./bull pack my_project
-   ```
-
-4. View the list of boxes:
-   ```bash
-   ./bull list
-   ```
-
-5. Unpacking the box:
-   ```bash
-   ./bull unpack my_project
-   ```
-
-6. Checking the changes:
-   ```bash
-   ./bull change -all
-   ```
-
-7. Removing the box:
-   ```bash
-   ./bull delete -name my_project
-   ```
-
-## Limitations and remarks
-
-- Binary files (ELF) are automatically excluded from packaging.
-- The `.bullgnore' file should contain relative paths to files and folders that should be ignored.
-
-## License
-
-Bull is distributed under the GNU General Public License v2.0 (GPL-2.0).
-
-
-
-
+**Usage**: `bull reset`
 
 
 # RU
-# Документация для системы контроля версий Bull
+Bull — это простая система контроля версий.
 
-## Введение
+## Команды
 
-Bull — это простая система контроля версий, реализованная на языке C++ для управления проектами через командную строку. Она позволяет инициализировать проекты, создавать "коробки" (box) для хранения версий файлов и папок, распаковывать их, удалять, а также отслеживать изменения в файлах и директориях.
+### `init`
+Инициализирует новый репозиторий Bull в текущей директории. Создает директорию `.bull`, настраивает базовую ветку (`base`) и инициализирует конфигурационные файлы.
 
-## Установка
+**Использование**: `bull init`
 
-1. **Требования**:
-   - Компилятор C++ (поддерживающий стандарт C++11 или выше).
-   - ОС на базе Linux
+### `add`
+Добавляет все неигнорируемые файлы в текущей директории в индекс для следующего коммита. Файлы, указанные в `.bullgnore` исключаются.
 
-2. **Сборка**:
-   - Сделайте файл install.sh исполняемым с помошью команды: `chmod +x install.sh`
-   - Запустите файл install.sh с помощью команды: `./install.sh`
+**Использование**: `bull add`
 
-## Использование
+### `gnore`
+Создает пустой файл `.bullgnore` в текущей директории для указания файлов или шаблонов, которые Bull должен игнорировать.
 
-Bull поддерживает следующие команды, которые передаются через аргументы командной строки:
+**Использование**: `bull gnore`
 
-### 1. Инициализация проекта (`init`)
-Создает папку `.bull` для хранения конфигурации и данных о версиях.
+### `new <имя_ветки>`
+Создает новую ветку с указанным именем. Ветка добавляется в список веток репозитория.
 
-```bash
-./bull init
-```
+**Использование**: `bull new <имя_ветки>`
 
-- **Описание**: Инициализирует новый проект, создавая директорию `.bull`.
+### `branch`
+Отображает список всех веток в репозитории.
 
-### 2. Создание новой версии (`pack`)
-Собирает файлы и папки из текущей директории в новую "коробку" (box) с уникальным идентификатором и именем.
+**Использование**: `bull branch`
 
-```bash
-./bull pack <box_name>
-```
+### `status`
+Показывает текущую ветку, языковые настройки и изменения в рабочей директории (добавленные, измененные или удаленные файлы). Сравнивает рабочую директорию с последним коммитом.
 
-- **Описание**: Создает новую версию проекта, сохраняя файлы и папки (кроме игнорируемых в `.bullgnore`).
-- **Параметры**:
-  - `<box_name>`: Имя коробки (не может быть пустым).
+**Использование**: `bull status`
 
-### 3. Создание файла игнорирования (`gnore`)
-Создает файл `.bullgnore` для указания файлов и папок, которые должны игнорироваться при упаковке.
+### `lang <язык>`
+Изменяет язык сообщений Bull. Поддерживаемые языки: `ru` (русский) и `en` (английский).
 
-```bash
-./bull gnore
-```
+**Использование**: `bull lang <ru|en>`
 
-- **Описание**: Создает пустой файл `.bullgnore` в текущей директории.
+### `pack <сообщение_коммита>`
+Создает новый коммит с указанным сообщением. Если сообщение заканчивается на `.txt`, содержимое указанного текстового файла используется как сообщение коммита.
 
-### 4. Список коробок (`list`)
-Выводит список всех коробок с их ID и именами.
+**Использование**: `bull pack <сообщение_коммита>`
 
-```bash
-./bull list
-```
+### `unpack <хэш_коммита>`
+Восстанавливает файлы из указанного коммита (по хэшу) в рабочую директорию.
 
-- **Результат**: Выводится список коробок, например:
-  ```
-  [BOX LIST]
-  1: 1234567 - my_project
-  2: 2345678 - another_project
-  ```
+**Использование**: `bull unpack <хэш_коммита>`
 
-### 5. Распаковка коробки (`unpack`)
-Восстанавливает файлы и папки из указанной коробки в текущую директорию.
+### `log`
+Отображает историю коммитов для текущей ветки. Выводит хэш и сообщение каждого коммита.
 
-#### По имени коробки
-```bash
-./bull unpack <box_name>
-```
+**Использование**: `bull log`
 
-- **Описание**: Распаковывает коробку с указанным именем.
-- **Параметры**:
-  - `<box_name>`: Имя коробки.
+### `set <имя_ветки>`
+Переключает текущую ветку на указанную.
 
-#### По ID коробки
-```bash
-./bull unpack -id <box_id>
-```
+**Использование**: `bull set <имя_ветки>`
 
-- **Описание**: Распаковывает коробку с указанным ID.
-- **Параметры**:
-  - `<box_id>`: Уникальный идентификатор коробки.
+### `remove -b <имя_ветки>`
+Удаляет указанную ветку.
 
-#### Последняя коробка
-```bash
-./bull unpack last
-```
+**Использование**: `bull remove -b <имя_ветки>`
 
-- **Описание**: Распаковывает последнюю созданную коробку.
+### `remove -c <хэш_коммита>`
+Удаляет коммит с указанным хэшем из текущей ветки.
 
-### 6. Удаление коробки (`delete`)
+**Использование**: `bull remove -c <хэш_коммита>`
 
-#### По имени коробки
-```bash
-./bull delete -name <box_name>
-```
+### `reset`
+Восстанавливает рабочую директорию до состояния последнего коммита в текущей ветке.
 
-- **Описание**: Удаляет коробку с указанным именем.
-- **Параметры**:
-  - `<box_name>`: Имя коробки.
-
-#### По ID коробки
-```bash
-./bull delete -id <box_id>
-```
-
-- **Описание**: Удаляет коробку с указанным ID.
-- **Параметры**:
-  - `<box_id>`: Уникальный идентификатор коробки.
-
-#### Последняя коробка
-```bash
-./bull delete -last
-```
-
-- **Описание**: Удаляет последнюю созданную коробку.
-
-### 7. Отслеживание изменений (`change`)
-
-#### Изменения в папках
-```bash
-./bull change -dir
-```
-
-- **Описание**: Сравнивает текущие папки с папками в последней коробке и выводит различия (добавленные или удаленные папки).
-
-#### Изменения в файлах
-```bash
-./bull change -file
-```
-
-- **Описание**: Сравнивает текущие файлы с файлами в последней коробке и выводит различия (добавленные или удаленные файлы).
-
-#### Изменения в содержимом файлов
-```bash
-./bull change -data
-```
-
-- **Описание**: Сравнивает содержимое файлов в текущей директории с содержимым файлов в последней коробке.
-
-#### Все изменения
-```bash
-./bull change -all
-```
-
-- **Описание**: Выполняет сравнение папок, файлов и их содержимого.
-
-## Пример использования
-
-1. Инициализация проекта:
-   ```bash
-   ./bull init
-   ```
-
-2. Создание файла `.bullgnore`:
-   ```bash
-   ./bull gnore
-   echo "node_modules" > .bullgnore
-   ```
-
-3. Упаковка проекта в коробку:
-   ```bash
-   ./bull pack my_project
-   ```
-
-4. Просмотр списка коробок:
-   ```bash
-   ./bull list
-   ```
-
-5. Распаковка коробки:
-   ```bash
-   ./bull unpack my_project
-   ```
-
-6. Проверка изменений:
-   ```bash
-   ./bull change -all
-   ```
-
-7. Удаление коробки:
-   ```bash
-   ./bull delete -name my_project
-   ```
-
-## Ограничения и замечания
-
-- Бинарные файлы (ELF) автоматически исключаются из упаковки.
-- Файл `.bullgnore` должен содержать относительные пути к файлам и папкам, которые нужно игнорировать.
-
-## Лицензия
-
-Bull распространяется под лицензией GNU General Public License v2.0 (GPL-2.0).
+**Использование**: `bull reset`
