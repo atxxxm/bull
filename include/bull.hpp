@@ -14,6 +14,8 @@ namespace bull
     const std::string file_list = "file_list"; 
     const std::string lang_config = "LANG"; 
 
+    bool isBinaryFile(const std::string& filename);
+
     std::string current_branch(); 
 
     bool is_branch(const std::string& branch); 
@@ -49,7 +51,10 @@ namespace bull
             std::string hash_gen(); 
             bool isMoreOne();
             bool isInitDir();
-            std::string select_random_branch(const std::string& exclude); 
+            std::string select_random_branch(const std::string& exclude);
+            void show_func(const std::string& commit_hash);
+            void comm_list_func(const std::string& commit_hash);
+            
         public:
             void pack(const std::string& commit); 
             void unpack(const std::string& hash); 
@@ -58,6 +63,11 @@ namespace bull
             void remove_commit(const std::string& commit_hash); 
             void log(); 
             void reset(); 
+            void show(const std::string& commit_hash);
+            void show_last();
+            void show_cur(const std::string& filename);
+            void comm_list(const std::string& commit_hash);
+            void comm_list_last();
 
             ~_action_() {}
     };

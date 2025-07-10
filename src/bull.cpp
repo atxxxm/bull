@@ -1,11 +1,27 @@
 #include "../include/bull.hpp"
-#include <filesystem>
 #include "../include/slog.hpp"
+#include <filesystem>
 #include <fstream>
 #include <random>
 #include <iostream>
+#include <iterator>
+#include <cctype>
 
 slog::LOG log_;
+
+bool bull::isBinaryFile(const std::string& filename) 
+{
+    std::ifstream file(filename, std::ios::binary);
+    if (!file) false;
+
+    char byte;
+    while (file.get(byte)) 
+    {
+        if (!std::isprint(byte) && !std::isspace(byte) && byte != '\n' && byte != '\t' && byte != '\r')  return true;
+    }
+
+    return false;
+}
 
 std::string bull::current_branch()
 {
@@ -727,7 +743,7 @@ void bull::_action_::set(const std::string& branch_name)
     wrt_branch.close();
 
     if (lang == "ru") log_.CUSTOM("light_blue", "ТЕКУЩАЯ ВЕТКА", branch_name);
-    else log_.CUSTOM("light_blue", "CURRENT branch", branch_name);
+    else log_.CUSTOM("light_blue", "CURRENT BRANCH", branch_name);
 }
 
 void bull::_action_::remove_branch(const std::string& branch_name)
@@ -844,7 +860,7 @@ void bull::_action_::log()
         return;
     }
 
-    std::string branch, line, path_to_branch;
+    std::string branch, line, path_to_branch, res;
     branch = bull::current_branch();
 
     path_to_branch = bull::init_dir + "/" + branch + "/" + bull::commit_list;
@@ -853,7 +869,17 @@ void bull::_action_::log()
 
     if (!read_commites.is_open()) return;
 
-    printf(lang == "ru" ? "ветка -> %s\n" : "branch -> %s\n", branch.c_str());
+
+    if (lang == "ru")
+    {
+        res = "ветка -> " + branch + "\n";
+        log_.CUSTOM_NSL("green", res);
+    }
+    else
+    {
+        res = "branch -> " + branch + "\n";
+        log_.CUSTOM_NSL("green", res);
+    }
 
     std::getline(read_commites, line);
 
@@ -892,4 +918,128 @@ void bull::_action_::reset()
     hash = line.substr(0, pos);
 
     unpack(hash);
+}
+
+void bull::_action_::show_func(const std::string& commit_hash)
+{
+    std::string lang = getCurrentLang();
+    if (!is_commit(commit_hash))
+    {
+        if (lang == "ru") log_.ERROR_NE("Коммит с хэшем '%s' не найден!", commit_hash.c_str());
+        else log_.ERROR_NE("No commits found with the hash '%s'", commit_hash.c_str());
+        return;
+    }
+
+    std::string path_to_file_list, path_to_commit, cur_branch, line, res;
+    
+    cur_branch = current_branch();
+    path_to_file_list = bull::init_dir + "/" + cur_branch + "/" + commit_hash + "/" + bull::file_list;
+    path_to_commit = bull::init_dir + "/" + cur_branch + "/" + commit_hash + "/";
+
+    std::ifstream read_to_file_list(path_to_file_list);
+    std::ifstream read_file;
+
+    res = cur_branch + "->" + commit_hash;
+    log_.CUSTOM_NSL("green", res);
+
+    while (std::getline(read_to_file_list, line))
+    {
+        if (line.empty()) continue;
+
+        if (isBinaryFile(path_to_commit + line)) continue;
+
+        read_file.open(path_to_commit + line, std::ios::binary);
+
+        log_.CUSTOM_NSL("blue", line + ":");
+        std::cout << std::string(std::istreambuf_iterator<char>(read_file), std::istreambuf_iterator<char>()) << std::endl;
+        printf("\n");
+
+        read_file.close();
+    }
+    
+    read_to_file_list.close();
+}
+
+void bull::_action_::show(const std::string& commit_hash)
+{
+    if (commit_hash.empty()) return;
+    show_func(commit_hash);
+}
+
+void bull::_action_::show_last()
+{
+    std::string commit = getLastCommit();
+    
+    if (commit.empty()) return;
+
+    show_func(commit);
+}
+
+void bull::_action_::show_cur(const std::string& filename)
+{
+    std::string path, cur_branch, commit, lang, res, line;
+    lang = getCurrentLang();
+    cur_branch = current_branch();
+    commit = getLastCommit();
+    path = bull::init_dir + "/" + cur_branch + "/" + commit + "/" + filename;
+
+    std::ifstream read_file(path, std::ios::binary);
+
+    if (!read_file.is_open())
+    {
+        res = cur_branch + "->" + commit;
+        if (lang == "ru") log_.ERROR_NE("Файл '%s' в %s не найден!", filename.c_str(), res.c_str());
+        else log_.ERROR_NE("The file '%s' was not found in the %s!", filename.c_str(), res.c_str());
+        return;
+    }
+
+    log_.CUSTOM_NSL("blue", filename + ":");
+
+    while (std::getline(read_file, line))
+    {
+        printf("%s\n", line.c_str());
+    }
+
+    read_file.close();
+}
+
+void bull::_action_::comm_list_func(const std::string& commit_hash)
+{
+    std::string lang = getCurrentLang();
+    if (!is_commit(commit_hash))
+    {
+        if (lang == "ru") log_.ERROR_NE("Коммит с хэшем '%s' не найден!", commit_hash.c_str());
+        else log_.ERROR_NE("No commits found with the hash '%s'", commit_hash.c_str());
+        return;
+    }
+
+    std::string path, cur_branch, line, res;
+    cur_branch = current_branch();
+    path = bull::init_dir + "/" + cur_branch + "/" + commit_hash + + "/" + bull::file_list;
+
+    std::ifstream read_fl(path);
+
+    res = cur_branch + "->" + commit_hash + "\n";
+    log_.CUSTOM_NSL("green", res);
+
+    if (lang == "ru") log_.CUSTOM("blue", "ФАЙЛЫ", "");
+    else log_.CUSTOM("blue", "FILES", "");
+
+    while (std::getline(read_fl, line))
+    {
+        printf("%s\n", line.c_str());
+    }
+
+    read_fl.close();
+}
+
+void bull::_action_::comm_list(const std::string& commit_hash)
+{
+    comm_list_func(commit_hash);
+}
+
+void bull::_action_::comm_list_last()
+{
+    std::string comm = getLastCommit();
+    comm_list_func(comm);
 }
