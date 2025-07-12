@@ -2,14 +2,16 @@
 #include <string.h>
 
 
-int main(int argc, char const *argv[])
+int main(int argc, char *argv[])
 {
     bull::_init_ init;
     bull::_action_ action;
     
     if (strcmp(argv[1], "init") == 0) init.init();
 
-    else if (strcmp(argv[1], "add") == 0) init.add();
+    else if (strcmp(argv[1], "add") == 0 && strcmp(argv[2], "-clean") == 0) init.add_clean();
+
+    else if (strcmp(argv[1], "add") == 0 && argc > 2) init.add(2, argc, argv);
 
     else if (strcmp(argv[1], "gnore") == 0) init.ignore();
 

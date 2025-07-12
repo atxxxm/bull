@@ -28,6 +28,8 @@ namespace bull
 
     std::string getCurrentLang(); 
 
+    std::vector<std::string> getArguments(int startIndex, int argc, char* argv[]);
+
     class _init_ 
     {
         private:
@@ -37,7 +39,8 @@ namespace bull
             bool isInitDir();
         public:
             void init(); 
-            void add(); 
+            void add_clean();
+            void add(int startIndex, int argc, char* argv[]); 
             void ignore(); 
             void branch(const std::string& name); 
             void list_branch(); 

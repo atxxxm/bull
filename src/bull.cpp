@@ -124,37 +124,42 @@ std::string bull::getLastCommit()
     return hash;
 }
 
+std::vector<std::string> bull::getArguments(int startIndex, int argc, char* argv[])
+{
+    std::vector<std::string> args;
+
+    for (int i = startIndex; i < argc; ++i)
+    {
+        args.push_back(argv[i]);
+    }
+
+    return args;
+}
+
 // INIT
 
 void bull::_init_::init() 
 {
-    std::string fmt_path = bull::init_dir + "/" + bull::base_branch;
+    std::string init_path = bull::init_dir + "/";
+     
+    if (std::filesystem::create_directories(init_path + bull::base_branch)) log_.INFO("The project has been successfully initialized!");
     
-    if (std::filesystem::create_directories(fmt_path))
-    {
-        log_.INFO("The project has been successfully initialized!");
-    }
-    else
-    {
-        log_.ERROR("The project has not been initialized!");
-    }
+    else log_.ERROR("The project has not been initialized!");
 
-    fmt_path = fmt_path + "/" + bull::commit_list;
-    std::ofstream head(fmt_path);
+    std::ofstream head;
+
+    head.open(init_path + bull::commit_list);
     head.close();
 
-    fmt_path = bull::init_dir + "/" + bull::branch_list;
-    head.open(fmt_path);
+    head.open(init_path + bull:: branch_list);
     head << bull::base_branch << "\n";
     head.close(); 
 
-    fmt_path = bull::init_dir + "/" + bull::config;
-    head.open(fmt_path);
+    head.open(init_path + bull::config);
     head << "[CURRENT BRANCH]\n" << bull::base_branch;
     head.close();
 
-    fmt_path = bull::init_dir + "/" + bull::lang_config;
-    head.open(fmt_path);
+    head.open(init_path + bull::lang_config);
     head << "en";
     head.close();
 }
@@ -197,7 +202,6 @@ bool bull::_init_::isInitDir()
 
 void bull::_init_::ignore()
 {
-    std::string lang = bull::getCurrentLang();
     std::ofstream gnore(bull::bullgnore);
     gnore.close();
     log_.CUSTOM_NSL("purple", "+ .bullgnore");
@@ -205,11 +209,10 @@ void bull::_init_::ignore()
 
 void bull::_init_::collect_ignore()
 {
+    std::string line;
     std::ifstream check_ignore(bullgnore);
 
     if (!check_ignore.is_open()) return;
-
-    std::string line;
     
     while (std::getline(check_ignore, line))
     {
@@ -353,9 +356,9 @@ void bull::_init_::checkEdit()
     current_files.clear();
 }
 
-void bull::_init_::add()
+void bull::_init_::add_clean()
 {
-    std::string lang = bull::getCurrentLang();
+    std::string lang = bull::getCurrentLang(), path;
     if (!isInitDir())
     {
         if (lang == "ru") log_.ERROR("Проект не был инициализирован!");
@@ -363,47 +366,92 @@ void bull::_init_::add()
         return;
     }
 
-    std::string file_l;
+    path = bull::init_dir + "/" + bull::data_list;
+    std::ofstream cl(path);
+    cl.close();
+}
+
+void bull::_init_::add(int startIndex, int argc, char* argv[])
+{
+    std::string lang, file_l, entry_path;
+    lang = bull::getCurrentLang();
+    if (!isInitDir())
+    {
+        if (lang == "ru") log_.ERROR("Проект не был инициализирован!");
+        else log_.ERROR("The project has not been initialized!");
+        return;
+    }
+
+    std::vector<std::string> args = bull::getArguments(startIndex, argc, argv);
+
     collect_ignore();
     ignore_list.push_back(bull::init_dir);
-     
     std::string path = bull::init_dir + "/" + bull::data_list;
-    std::ofstream dataF(path);
-    
-    for (const auto& entry : std::filesystem::recursive_directory_iterator("."))
-    {
-        if (!entry.is_regular_file()) continue;
-        bool should_ignore = false;
-        std::string entry_path = entry.path().string();
 
-        if (!ignore_list.empty())
+    if (args.size() < 2 && args.back() == ".")
+    {
+        std::ofstream dataF(path);
+        
+        for (const auto& entry : std::filesystem::recursive_directory_iterator("."))
         {
-            for (const auto& il : ignore_list)
+            if (!entry.is_regular_file()) continue;
+            bool should_ignore = false;
+            entry_path = entry.path().string();
+
+            if (!ignore_list.empty())
             {
-                if (entry_path.find(il) != std::string::npos)
+                for (const auto& il : ignore_list)
                 {
-                    should_ignore = true;
-                    break;
+                    if (entry_path.find(il) != std::string::npos)
+                    {
+                        should_ignore = true;
+                        break;
+                    }
                 }
+            }
+
+            if (!should_ignore)
+            {
+                dataF << entry_path << "\n";
+                file_l += "+ " + entry_path + "\n";
             }
         }
 
-        if (!should_ignore)
+        dataF.close();
+        ignore_list.clear();
+
+        log_.CUSTOM_NSL("green", file_l);
+
+        return;
+    }
+    else
+    {
+        std::ofstream w_f(path);
+
+        for (const auto& a : args)
         {
-            dataF << entry_path << "\n";
+            if (!std::filesystem::exists(a) || !std::filesystem::is_regular_file(a)) continue;
+            
+            entry_path = "./" + a;
+            w_f << entry_path << "\n";
             file_l += "+ " + entry_path + "\n";
         }
+
+        w_f.close();
+
+        log_.CUSTOM_NSL("green", file_l);
+
+        return;
     }
-
-    dataF.close();
-    ignore_list.clear();
-
-    log_.CUSTOM_NSL("green", file_l);
+     
+   
 }
 
 void bull::_init_::branch(const std::string& name)
 {
-    std::string lang = bull::getCurrentLang();
+    std::string lang, path, result;
+
+    lang = bull::getCurrentLang();
     if (!isInitDir())
     {
         if (lang == "ru") log_.ERROR("Проект не был инициализирован!");
@@ -411,7 +459,7 @@ void bull::_init_::branch(const std::string& name)
         return;
     }
 
-    std::string path = bull::init_dir + "/" + name, result;
+    path = bull::init_dir + "/" + name;
     
     if (std::filesystem::create_directory(path))
     {
@@ -437,7 +485,10 @@ void bull::_init_::branch(const std::string& name)
 
 void bull::_init_::list_branch()
 {
-    std::string lang = bull::getCurrentLang();
+    std::string lang, cur_branch, res, path, line; 
+
+    lang = bull::getCurrentLang();
+
     if (!isInitDir())
     {
         if (lang == "ru") log_.ERROR("Проект не был инициализирован!");
@@ -445,7 +496,6 @@ void bull::_init_::list_branch()
         return;
     }
 
-    std::string cur_branch, res, path, line;
     cur_branch = current_branch();
     path = bull::init_dir + "/" + bull::branch_list;
 
@@ -468,7 +518,9 @@ void bull::_init_::list_branch()
 
 void bull::_init_::status()
 {
-    std::string lang = bull::getCurrentLang();
+    std::string lang, line;
+    lang = bull::getCurrentLang();
+
     if (!isInitDir())
     {
         if (lang == "ru") log_.ERROR("Проект не был инициализирован!");
@@ -476,7 +528,8 @@ void bull::_init_::status()
         return;
     }
 
-    std::string line = bull::current_branch();
+    line = bull::current_branch();
+
     if (lang == "ru")
     {
         log_.CUSTOM("light_blue", "ТЕКУЩАЯ ВЕТКА", line);
@@ -552,15 +605,17 @@ std::string bull::_action_::select_random_branch(const std::string& exclude)
 
 void bull::_action_::pack(const std::string& comm)
 {
-    std::string lang = bull::getCurrentLang();
+    std::string lang, fmt_commit, commit, commit_list, lemma, line_comm;
+
+    lang = bull::getCurrentLang();
+
     if (!isInitDir())
     {
         if (lang == "ru") log_.ERROR("Проект не был инициализирован!");
         else log_.ERROR("The project has not been initialized!");
         return;
     }
-
-    std::string fmt_commit, commit, commit_list, lemma, line_comm;
+    
     if (comm.size() > 4)
     {
         fmt_commit = comm.substr(comm.size() - 4, comm.size());
