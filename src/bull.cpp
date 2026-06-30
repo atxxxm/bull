@@ -688,11 +688,13 @@ void bull::_action_::pack(const std::string& comm)
 
         if (!std::filesystem::exists(line)) continue;
 
-        std::string f_l = line;
+        std::string normalized = line;
+        if (normalized.size() >= 2 && normalized[0] == '.' && normalized[1] == '/')
+            normalized = normalized.substr(2);
 
-        list_f << f_l.substr(2) << "\n";
+        list_f << normalized << "\n";
 
-        std::string target_file = path_to_copy + line.substr(2);
+        std::string target_file = path_to_copy + normalized;
         std::string target_dir = std::filesystem::path(target_file).parent_path().string();
 
         if (!target_dir.empty()) 
