@@ -16,6 +16,8 @@ namespace bull
 
     bool isBinaryFile(const std::string& filename);
 
+    bool isInitDir();
+
     std::string current_branch(); 
 
     bool is_branch(const std::string& branch); 
@@ -30,13 +32,12 @@ namespace bull
 
     std::vector<std::string> getArguments(int startIndex, int argc, char* argv[]);
 
-    class _init_ 
+    class _init_
     {
         private:
-            std::vector<std::string> ignore_list; 
-            void collect_ignore(); 
-            void checkEdit(); 
-            bool isInitDir();
+            std::vector<std::string> ignore_list;
+            void collect_ignore();
+            void checkEdit();
         public:
             void init(); 
             void add_clean();
@@ -48,12 +49,11 @@ namespace bull
             void changeLang(const std::string& lang); 
     };
 
-    class _action_ 
+    class _action_
     {
         private:
-            std::string hash_gen(); 
+            std::string hash_gen();
             bool isMoreOne();
-            bool isInitDir();
             std::string select_random_branch(const std::string& exclude);
             void show_func(const std::string& commit_hash);
             void comm_list_func(const std::string& commit_hash);

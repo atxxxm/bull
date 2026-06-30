@@ -9,7 +9,12 @@
 
 slog::LOG log_;
 
-bool bull::isBinaryFile(const std::string& filename) 
+bool bull::isInitDir()
+{
+    return std::filesystem::is_directory(bull::init_dir);
+}
+
+bool bull::isBinaryFile(const std::string& filename)
 {
     std::ifstream file(filename, std::ios::binary);
     if (!file) return false;
@@ -195,11 +200,6 @@ void bull::_init_::changeLang(const std::string& lang)
     }
 }
 
-bool bull::_init_::isInitDir()
-{
-    return std::filesystem::is_directory(bull::init_dir);
-}
-
 void bull::_init_::ignore()
 {
     std::ofstream gnore(bull::bullgnore);
@@ -359,7 +359,7 @@ void bull::_init_::checkEdit()
 void bull::_init_::add_clean()
 {
     std::string lang = bull::getCurrentLang(), path;
-    if (!isInitDir())
+    if (!bull::isInitDir())
     {
         if (lang == "ru") log_.ERROR("Проект не был инициализирован!");
         else log_.ERROR("The project has not been initialized!");
@@ -375,7 +375,7 @@ void bull::_init_::add(int startIndex, int argc, char* argv[])
 {
     std::string lang, file_l, entry_path;
     lang = bull::getCurrentLang();
-    if (!isInitDir())
+    if (!bull::isInitDir())
     {
         if (lang == "ru") log_.ERROR("Проект не был инициализирован!");
         else log_.ERROR("The project has not been initialized!");
@@ -470,7 +470,7 @@ void bull::_init_::branch(const std::string& name)
     std::string lang, path, result;
 
     lang = bull::getCurrentLang();
-    if (!isInitDir())
+    if (!bull::isInitDir())
     {
         if (lang == "ru") log_.ERROR("Проект не был инициализирован!");
         else log_.ERROR("The project has not been initialized!");
@@ -507,7 +507,7 @@ void bull::_init_::list_branch()
 
     lang = bull::getCurrentLang();
 
-    if (!isInitDir())
+    if (!bull::isInitDir())
     {
         if (lang == "ru") log_.ERROR("Проект не был инициализирован!");
         else log_.ERROR("The project has not been initialized!");
@@ -539,7 +539,7 @@ void bull::_init_::status()
     std::string lang, line;
     lang = bull::getCurrentLang();
 
-    if (!isInitDir())
+    if (!bull::isInitDir())
     {
         if (lang == "ru") log_.ERROR("Проект не был инициализирован!");
         else log_.ERROR("The project has not been initialized!");
@@ -563,11 +563,6 @@ void bull::_init_::status()
 }
 
 // ACTION
-
-bool bull::_action_::isInitDir()
-{
-    return std::filesystem::is_directory(bull::init_dir);
-}
 
 std::string bull::_action_::hash_gen()
 {
@@ -633,7 +628,7 @@ void bull::_action_::pack(const std::string& comm)
 
     lang = bull::getCurrentLang();
 
-    if (!isInitDir())
+    if (!bull::isInitDir())
     {
         if (lang == "ru") log_.ERROR("Проект не был инициализирован!");
         else log_.ERROR("The project has not been initialized!");
@@ -934,7 +929,7 @@ void bull::_action_::remove_commit(const std::string& commit_hash)
 void bull::_action_::log()
 {
     std::string lang = bull::getCurrentLang();
-    if (!isInitDir())
+    if (!bull::isInitDir())
     {
         if (lang == "ru") log_.ERROR("Проект не был инициализирован!");
         else log_.ERROR("The project has not been initialized!");
@@ -977,7 +972,7 @@ void bull::_action_::log()
 void bull::_action_::reset()
 {
     std::string lang = bull::getCurrentLang();
-    if (!isInitDir())
+    if (!bull::isInitDir())
     {
         if (lang == "ru") log_.ERROR("Проект не был инициализирован!");
         else log_.ERROR("The project has not been initialized!");
