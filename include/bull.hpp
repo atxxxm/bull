@@ -12,7 +12,8 @@ namespace bull
     const std::string config = "CONFIG"; 
     const std::string commit_list = "commit_list"; 
     const std::string file_list = "file_list"; 
-    const std::string lang_config = "LANG"; 
+    const std::string lang_config = "LANG";
+    const std::string stash_dir = "stash";
 
     struct CommitInfo
     {
@@ -86,5 +87,7 @@ namespace bull
             void diff();
             void diff(const std::string& hash);
             void diff(const std::string& hash1, const std::string& hash2);
+            void stash();
+            void stash_pop();
     };
 }

@@ -704,3 +704,127 @@ void bull::Action::diff()
 
     diff(hash);
 }
+
+void bull::Action::stash()
+{
+    std::string lang = bull::getCurrentLang();
+
+    if (!bull::isInitDir())
+    {
+        if (lang == "ru") log_.ERROR("Проект не был инициализирован!");
+        else log_.ERROR("The project has not been initialized!");
+        return;
+    }
+
+    std::string staging_path = bull::init_dir + "/" + bull::data_list;
+    std::string stash_path   = bull::init_dir + "/" + bull::stash_dir + "/";
+    std::string stash_list   = stash_path + bull::file_list;
+
+    std::ifstream check_staging(staging_path);
+    bool staging_empty = true;
+    std::string tmp;
+    while (std::getline(check_staging, tmp))
+        if (!tmp.empty()) { staging_empty = false; break; }
+    check_staging.close();
+
+    if (staging_empty)
+    {
+        if (lang == "ru") log_.WARNING("Нет файлов для сохранения в stash.");
+        else log_.WARNING("Nothing to stash.");
+        return;
+    }
+
+    std::filesystem::create_directories(stash_path);
+
+    std::ifstream read_staging(staging_path);
+    std::ofstream write_stash_list(stash_list);
+    std::ifstream red;
+    std::ofstream wrt;
+    std::string line;
+
+    while (std::getline(read_staging, line))
+    {
+        if (line.empty() || !std::filesystem::exists(line)) continue;
+
+        std::string normalized = line;
+        if (normalized.size() >= 2 && normalized[0] == '.' && normalized[1] == '/')
+            normalized = normalized.substr(2);
+
+        std::string target = stash_path + normalized;
+        std::filesystem::create_directories(std::filesystem::path(target).parent_path());
+
+        red.open(line, std::ios::binary);
+        wrt.open(target, std::ios::binary);
+        if (red.is_open() && wrt.is_open()) wrt << red.rdbuf();
+        red.close();
+        wrt.close();
+
+        write_stash_list << normalized << "\n";
+    }
+
+    read_staging.close();
+    write_stash_list.close();
+
+    std::ofstream clear_staging(staging_path);
+    clear_staging.close();
+
+    std::string last = bull::getLastCommit();
+    if (!last.empty()) unpack(last);
+
+    if (lang == "ru") log_.INFO("Изменения сохранены в stash.");
+    else log_.INFO("Changes saved to stash.");
+}
+
+void bull::Action::stash_pop()
+{
+    std::string lang = bull::getCurrentLang();
+
+    if (!bull::isInitDir())
+    {
+        if (lang == "ru") log_.ERROR("Проект не был инициализирован!");
+        else log_.ERROR("The project has not been initialized!");
+        return;
+    }
+
+    std::string stash_path = bull::init_dir + "/" + bull::stash_dir + "/";
+    std::string stash_list = stash_path + bull::file_list;
+
+    if (!std::filesystem::exists(stash_list))
+    {
+        if (lang == "ru") log_.WARNING("Stash пуст.");
+        else log_.WARNING("Stash is empty.");
+        return;
+    }
+
+    std::ifstream read_list(stash_list);
+    std::ofstream write_staging(bull::init_dir + "/" + bull::data_list);
+    std::ifstream red;
+    std::ofstream wrt;
+    std::string line;
+
+    while (std::getline(read_list, line))
+    {
+        if (line.empty()) continue;
+
+        std::string src = stash_path + line;
+        if (!std::filesystem::exists(src)) continue;
+
+        std::filesystem::create_directories(std::filesystem::path(line).parent_path());
+
+        red.open(src, std::ios::binary);
+        wrt.open(line, std::ios::binary);
+        if (red.is_open() && wrt.is_open()) wrt << red.rdbuf();
+        red.close();
+        wrt.close();
+
+        write_staging << "./" << line << "\n";
+    }
+
+    read_list.close();
+    write_staging.close();
+
+    std::filesystem::remove_all(stash_path);
+
+    if (lang == "ru") log_.INFO("Изменения восстановлены из stash.");
+    else log_.INFO("Changes restored from stash.");
+}

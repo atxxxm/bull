@@ -37,6 +37,9 @@ int main(int argc, char *argv[])
         printf("  diff                   Diff working tree vs latest commit\n");
         printf("  diff <hash>            Diff working tree vs a commit\n");
         printf("  diff <hash1> <hash2>   Diff between two commits\n");
+        printf("Stash:\n");
+        printf("  stash                  Save staged changes and restore last commit\n");
+        printf("  stash pop              Restore saved changes from stash\n");
         printf("\nSettings:\n");
         printf("  lang <ru|en>           Change output language\n");
         printf("  help                   Show this help message\n\n");
@@ -81,6 +84,8 @@ int main(int argc, char *argv[])
             else if (!sub.empty()) action.diff(sub);
             else action.diff();
         }},
+        {"stash pop",   [&]{ action.stash_pop(); }},
+        {"stash",       [&]{ action.stash(); }},
         {"help",        [&]{ print_help(); }},
     };
 
