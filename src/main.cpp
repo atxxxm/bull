@@ -1,6 +1,8 @@
 #include "../include/bull.hpp"
-#include <string.h>
-
+#include <functional>
+#include <map>
+#include <string>
+#include <cstdio>
 
 int main(int argc, char *argv[])
 {
@@ -13,45 +15,43 @@ int main(int argc, char *argv[])
     bull::Init init;
     bull::Action action;
 
-    if (strcmp(argv[1], "init") == 0) init.init();
+    std::string cmd = argv[1];
+    std::string sub = argc > 2 ? argv[2] : "";
+    std::string arg3 = argc > 3 ? argv[3] : "";
 
-    else if (strcmp(argv[1], "add") == 0 && argc > 2 && strcmp(argv[2], "-clean") == 0) init.add_clean();
+    std::map<std::string, std::function<void()>> commands = {
+        {"init",        [&]{ init.init(); }},
+        {"add -clean",  [&]{ init.add_clean(); }},
+        {"add",         [&]{ if (!sub.empty()) init.add(2, argc, argv); }},
+        {"gnore",       [&]{ init.ignore(); }},
+        {"new",         [&]{ if (!sub.empty()) init.branch(sub); }},
+        {"branch",      [&]{ init.list_branch(); }},
+        {"status",      [&]{ init.status(); }},
+        {"lang",        [&]{ if (!sub.empty()) init.changeLang(sub); }},
+        {"pack",        [&]{ if (!sub.empty()) action.pack(sub); }},
+        {"unpack",      [&]{ if (!sub.empty()) action.unpack(sub); }},
+        {"log",         [&]{ action.log(); }},
+        {"set",         [&]{ if (!sub.empty()) action.set(sub); }},
+        {"remove -b",   [&]{ if (!arg3.empty()) action.remove_branch(arg3); }},
+        {"remove -c",   [&]{ if (!arg3.empty()) action.remove_commit(arg3); }},
+        {"reset",       [&]{ action.reset(); }},
+        {"show -last",  [&]{ action.show_last(); }},
+        {"show -cur",   [&]{ if (!arg3.empty()) action.show_cur(arg3); }},
+        {"show",        [&]{ if (!sub.empty()) action.show(sub); }},
+        {"list -last",  [&]{ action.comm_list_last(); }},
+        {"list",        [&]{ if (!sub.empty()) action.comm_list(sub); }},
+    };
 
-    else if (strcmp(argv[1], "add") == 0 && argc > 2) init.add(2, argc, argv);
+    std::string key = sub.empty() ? cmd : cmd + " " + sub;
 
-    else if (strcmp(argv[1], "gnore") == 0) init.ignore();
+    auto it = commands.find(key);
+    if (it == commands.end() && !sub.empty())
+        it = commands.find(cmd);
 
-    else if (strcmp(argv[1], "new") == 0 && argc > 2) init.branch(std::string(argv[2]));
+    if (it != commands.end())
+        it->second();
+    else
+        printf("Unknown command: %s\n", cmd.c_str());
 
-    else if (strcmp(argv[1], "branch") == 0) init.list_branch();
-
-    else if (strcmp(argv[1], "status") == 0) init.status();
-
-    else if (strcmp(argv[1], "lang") == 0 && argc > 2) init.changeLang(std::string(argv[2]));
-
-    else if (strcmp(argv[1], "pack") == 0 && argc > 2) action.pack(std::string(argv[2]));
-
-    else if (strcmp(argv[1], "unpack") == 0 && argc > 2) action.unpack(std::string(argv[2]));
-
-    else if (strcmp(argv[1], "log") == 0) action.log();
-
-    else if (strcmp(argv[1], "set") == 0 && argc > 2) action.set(std::string(argv[2]));
-
-    else if (strcmp(argv[1], "remove") == 0 && argc > 3 && strcmp(argv[2], "-b") == 0) action.remove_branch(std::string(argv[3]));
-
-    else if (strcmp(argv[1], "remove") == 0 && argc > 3 && strcmp(argv[2], "-c") == 0) action.remove_commit(std::string(argv[3]));
-
-    else if (strcmp(argv[1], "reset") == 0) action.reset();
-
-    else if (strcmp(argv[1], "show") == 0 && argc > 2 && strcmp(argv[2], "-last") == 0) action.show_last();
-
-    else if (strcmp(argv[1], "show") == 0 && argc > 3 && strcmp(argv[2], "-cur") == 0) action.show_cur(std::string(argv[3]));
-
-    else if (strcmp(argv[1], "show") == 0 && argc > 2) action.show(std::string(argv[2]));
-
-    else if (strcmp(argv[1], "list") == 0 && argc > 2 && strcmp(argv[2], "-last") == 0) action.comm_list_last();
-
-    else if (strcmp(argv[1], "list") == 0 && argc > 2) action.comm_list(std::string(argv[2]));
-    
     return 0;
 }
