@@ -8,6 +8,7 @@
 #include <cctype>
 
 slog::LOG log_;
+static std::string lang_cache;
 
 bool bull::isInitDir()
 {
@@ -171,33 +172,28 @@ void bull::_init_::init()
 
 std::string bull::getCurrentLang()
 {
-    std::string lang;
+    if (!lang_cache.empty()) return lang_cache;
+
     std::ifstream read_lang(bull::init_dir + "/" + bull::lang_config);
+    std::getline(read_lang, lang_cache);
 
-    std::getline(read_lang, lang);
-
-    return lang;
+    return lang_cache;
 }
 
 void bull::_init_::changeLang(const std::string& lang)
 {
-    std::string current_lang = bull::getCurrentLang();
-    if (lang == "ru" || lang == "RU" || lang == "Ru" || lang == "rU")
-    {
-        std::ofstream ch_lang(bull::init_dir + "/" + bull::lang_config);
-        ch_lang << "ru";
-        ch_lang.close();
+    std::string normalized;
+    if (lang == "ru" || lang == "RU" || lang == "Ru" || lang == "rU") normalized = "ru";
+    else if (lang == "en" || lang == "EN" || lang == "En" || lang == "eN") normalized = "en";
+    else return;
 
-        log_.CUSTOM("blue", "LANG", "ru");
-    }
-    else if (lang == "en" || lang == "EN" || lang == "En" || lang == "eN")
-    {
-        std::ofstream ch_lang(bull::init_dir + "/" + bull::lang_config);
-        ch_lang << "en";
-        ch_lang.close();
+    std::ofstream ch_lang(bull::init_dir + "/" + bull::lang_config);
+    ch_lang << normalized;
+    ch_lang.close();
 
-        log_.CUSTOM("blue", "LANG", "en");
-    }
+    lang_cache = normalized;
+
+    log_.CUSTOM("blue", "LANG", normalized);
 }
 
 void bull::_init_::ignore()
