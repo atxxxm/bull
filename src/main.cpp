@@ -15,7 +15,7 @@ int main(int argc, char *argv[])
 
     if (strcmp(argv[1], "init") == 0) init.init();
 
-    else if (strcmp(argv[1], "add") == 0 && strcmp(argv[2], "-clean") == 0) init.add_clean();
+    else if (strcmp(argv[1], "add") == 0 && argc > 2 && strcmp(argv[2], "-clean") == 0) init.add_clean();
 
     else if (strcmp(argv[1], "add") == 0 && argc > 2) init.add(2, argc, argv);
 
@@ -37,19 +37,19 @@ int main(int argc, char *argv[])
 
     else if (strcmp(argv[1], "set") == 0 && argc > 2) action.set(std::string(argv[2]));
 
-    else if (strcmp(argv[1], "remove") == 0 && strcmp(argv[2], "-b") == 0 && argc > 3) action.remove_branch(std::string(argv[3]));
+    else if (strcmp(argv[1], "remove") == 0 && argc > 3 && strcmp(argv[2], "-b") == 0) action.remove_branch(std::string(argv[3]));
 
-    else if (strcmp(argv[1], "remove") == 0 && strcmp(argv[2], "-c") == 0 && argc > 3) action.remove_commit(std::string(argv[3]));
+    else if (strcmp(argv[1], "remove") == 0 && argc > 3 && strcmp(argv[2], "-c") == 0) action.remove_commit(std::string(argv[3]));
 
     else if (strcmp(argv[1], "reset") == 0) action.reset();
 
-    else if (strcmp(argv[1], "show") == 0 && strcmp(argv[2], "-last") == 0) action.show_last();
+    else if (strcmp(argv[1], "show") == 0 && argc > 2 && strcmp(argv[2], "-last") == 0) action.show_last();
 
-    else if (strcmp(argv[1], "show") == 0 && strcmp(argv[2], "-cur") == 0 && argc > 3) action.show_cur(std::string(argv[3]));
+    else if (strcmp(argv[1], "show") == 0 && argc > 3 && strcmp(argv[2], "-cur") == 0) action.show_cur(std::string(argv[3]));
 
     else if (strcmp(argv[1], "show") == 0 && argc > 2) action.show(std::string(argv[2]));
 
-    else if (strcmp(argv[1], "list") == 0 && strcmp(argv[2], "-last") == 0) action.comm_list_last();
+    else if (strcmp(argv[1], "list") == 0 && argc > 2 && strcmp(argv[2], "-last") == 0) action.comm_list_last();
 
     else if (strcmp(argv[1], "list") == 0 && argc > 2) action.comm_list(std::string(argv[2]));
     
