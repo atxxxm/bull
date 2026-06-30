@@ -2,31 +2,42 @@
 #include <iostream>
 #include <fstream>
 #include <string>
+#include <vector>
 #include <chrono>
 #include <stdio.h>
 #include <stdarg.h>
 #include <ctime>
 
-void slog::LOG::print(COLOR color, const char* text, const char* str, va_list args) noexcept 
+static std::string format_args(const char* fmt, va_list args)
 {
-    char buff[1024] = {0};
-    char file_buff[1024] = {0};
-    snprintf(buff, sizeof(buff), "[\033[1;%dm%s\033[0m]: %s\n", static_cast<int>(color), text, str);
-    vprintf(buff, args);
+    va_list args_copy;
+    va_copy(args_copy, args);
+    int size = vsnprintf(nullptr, 0, fmt, args_copy);
+    va_end(args_copy);
 
-    snprintf(file_buff, sizeof(file_buff), "[%s]: %s\n", text, str);
+    if (size <= 0) return "";
 
-    if (file.is_open()) {
-        char formatted_buff[1024] = {0};
-        vsnprintf(formatted_buff, sizeof(formatted_buff), file_buff, args);
+    std::vector<char> buf(size + 1);
+    vsnprintf(buf.data(), buf.size(), fmt, args);
+    return std::string(buf.data());
+}
 
+void slog::LOG::print(COLOR color, const char* text, const char* str, va_list args) noexcept
+{
+    std::string message = format_args(str, args);
+
+    printf("[\033[1;%dm%s\033[0m]: %s\n", static_cast<int>(color), text, message.c_str());
+
+    if (file.is_open())
+    {
         std::time_t now = std::time(nullptr);
         std::tm* local_time = std::localtime(&now);
 
-        int hours = local_time->tm_hour;
-        int minutes = local_time->tm_min;
-        int seconds = local_time->tm_sec;
-        file << "(" << hours << ":" << minutes << ":" << seconds << ")" << formatted_buff;
+        file << "("
+             << local_time->tm_hour << ":"
+             << local_time->tm_min  << ":"
+             << local_time->tm_sec  << ")"
+             << "[" << text << "]: " << message << "\n";
     }
 }
 
