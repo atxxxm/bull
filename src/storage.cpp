@@ -3,9 +3,21 @@
 #include <filesystem>
 #include <fstream>
 #include <cctype>
+#include <sstream>
 
 slog::LOG log_;
 std::string lang_cache;
+
+bull::CommitInfo bull::parseCommitLine(const std::string& line)
+{
+    CommitInfo info;
+    std::istringstream ss(line);
+    std::getline(ss, info.hash, '|');
+    std::getline(ss, info.timestamp, '|');
+    std::getline(ss, info.parent_hash, '|');
+    std::getline(ss, info.message);
+    return info;
+}
 
 bool bull::isInitDir()
 {
@@ -61,41 +73,31 @@ bool bull::is_commit(const std::string& hash)
 {
     std::string cur_branch = current_branch();
     std::string path = bull::init_dir + "/" + cur_branch + "/" + bull::commit_list;
-    std::string word;
 
     std::ifstream read_commit_list(path);
+    std::string line;
 
-    while (read_commit_list >> word)
+    while (std::getline(read_commit_list, line))
     {
-        if (word == hash) return true;
+        if (line.empty()) continue;
+        if (parseCommitLine(line).hash == hash) return true;
     }
-
-    read_commit_list.close();
 
     return false;
 }
 
 int bull::getLineCommit(const std::string& branch, const std::string& commit_hash)
 {
-    std::string path = bull::init_dir + "/" + branch + "/" + bull::commit_list, line;
+    std::string path = bull::init_dir + "/" + branch + "/" + bull::commit_list;
 
     std::ifstream read_commit_list(path);
-
+    std::string line;
     int i = 0;
-    size_t pos = 0;
-    std::string fmt_line;
 
     while (std::getline(read_commit_list, line))
     {
         ++i;
-        pos = line.find(' ');
-
-        if (pos != std::string::npos)
-        {
-            fmt_line = line.substr(0, pos);
-
-            if (fmt_line == commit_hash) break;
-        }
+        if (!line.empty() && parseCommitLine(line).hash == commit_hash) break;
     }
 
     return i;
@@ -107,14 +109,11 @@ std::string bull::getLastCommit()
     std::string path = bull::init_dir + "/" + cur_branch + "/" + bull::commit_list;
 
     std::ifstream read_commit_list(path);
-
     std::string line;
     std::getline(read_commit_list, line);
 
-    read_commit_list.close();
-
-    size_t pos = line.find(' ');
-    return line.substr(0, pos);
+    if (line.empty()) return "";
+    return parseCommitLine(line).hash;
 }
 
 std::vector<std::string> bull::getArguments(int startIndex, int argc, char* argv[])

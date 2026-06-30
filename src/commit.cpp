@@ -4,6 +4,7 @@
 #include <fstream>
 #include <iostream>
 #include <random>
+#include <ctime>
 
 extern slog::LOG log_;
 
@@ -101,6 +102,11 @@ void bull::Action::pack(const std::string& comm)
     std::string cur_branch = bull::current_branch();
     std::string path = bull::init_dir + "/" + cur_branch + "/" + bull::commit_list;
 
+    std::string parent_hash = bull::getLastCommit();
+    if (parent_hash.empty()) parent_hash = "none";
+
+    std::string timestamp = std::to_string(std::time(nullptr));
+
     std::string commit_list, lemma;
     std::ifstream read_commit_list(path);
 
@@ -113,7 +119,7 @@ void bull::Action::pack(const std::string& comm)
     read_commit_list.close();
 
     std::ofstream tocommit(path);
-    tocommit << hash << " " << commit << "\n" << commit_list;
+    tocommit << hash << "|" << timestamp << "|" << parent_hash << "|" << commit << "\n" << commit_list;
     tocommit.close();
 
     std::string path_to_copy = bull::init_dir + "/" + cur_branch + "/" + hash + "/";
@@ -347,16 +353,27 @@ void bull::Action::log()
     std::ifstream read_commites(path_to_branch);
     if (!read_commites.is_open()) return;
 
-    std::string line;
     if (lang == "ru") log_.CUSTOM_NSL("green", "ветка -> " + branch + "\n");
     else log_.CUSTOM_NSL("green", "branch -> " + branch + "\n");
 
-    std::getline(read_commites, line);
-    log_.CUSTOM_NSL("orange", line);
+    std::string line;
+    bool first = true;
 
     while (std::getline(read_commites, line))
     {
-        printf("%s\n", line.c_str());
+        if (line.empty()) continue;
+
+        bull::CommitInfo info = bull::parseCommitLine(line);
+
+        std::time_t ts = static_cast<std::time_t>(std::stoll(info.timestamp));
+        std::tm* t = std::localtime(&ts);
+        char date_buf[32];
+        std::strftime(date_buf, sizeof(date_buf), "%Y-%m-%d %H:%M:%S", t);
+
+        std::string entry = info.hash + " [" + date_buf + "] " + info.message;
+
+        if (first) { log_.CUSTOM_NSL("orange", entry); first = false; }
+        else printf("%s\n", entry.c_str());
     }
 
     read_commites.close();

@@ -14,6 +14,16 @@ namespace bull
     const std::string file_list = "file_list"; 
     const std::string lang_config = "LANG"; 
 
+    struct CommitInfo
+    {
+        std::string hash;
+        std::string timestamp;
+        std::string parent_hash;
+        std::string message;
+    };
+
+    CommitInfo parseCommitLine(const std::string& line);
+
     bool isBinaryFile(const std::string& filename);
 
     bool isInitDir();
