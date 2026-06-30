@@ -32,24 +32,24 @@ namespace bull
 
     std::vector<std::string> getArguments(int startIndex, int argc, char* argv[]);
 
-    class _init_
+    class Init
     {
         private:
             std::vector<std::string> ignore_list;
             void collect_ignore();
             void checkEdit();
         public:
-            void init(); 
+            void init();
             void add_clean();
-            void add(int startIndex, int argc, char* argv[]); 
-            void ignore(); 
-            void branch(const std::string& name); 
-            void list_branch(); 
-            void status(); 
-            void changeLang(const std::string& lang); 
+            void add(int startIndex, int argc, char* argv[]);
+            void ignore();
+            void branch(const std::string& name);
+            void list_branch();
+            void status();
+            void changeLang(const std::string& lang);
     };
 
-    class _action_
+    class Action
     {
         private:
             std::string hash_gen();
@@ -57,21 +57,19 @@ namespace bull
             std::string select_random_branch(const std::string& exclude);
             void show_func(const std::string& commit_hash);
             void comm_list_func(const std::string& commit_hash);
-            
+
         public:
-            void pack(const std::string& commit); 
-            void unpack(const std::string& hash); 
-            void set(const std::string& branch_name); 
-            void remove_branch(const std::string& branch_name); 
-            void remove_commit(const std::string& commit_hash); 
-            void log(); 
-            void reset(); 
+            void pack(const std::string& commit);
+            void unpack(const std::string& hash);
+            void set(const std::string& branch_name);
+            void remove_branch(const std::string& branch_name);
+            void remove_commit(const std::string& commit_hash);
+            void log();
+            void reset();
             void show(const std::string& commit_hash);
             void show_last();
             void show_cur(const std::string& filename);
             void comm_list(const std::string& commit_hash);
             void comm_list_last();
-
-            ~_action_() {}
     };
 }

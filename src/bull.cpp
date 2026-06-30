@@ -144,7 +144,7 @@ std::vector<std::string> bull::getArguments(int startIndex, int argc, char* argv
 
 // INIT
 
-void bull::_init_::init() 
+void bull::Init::init() 
 {
     std::string init_path = bull::init_dir + "/";
      
@@ -180,7 +180,7 @@ std::string bull::getCurrentLang()
     return lang_cache;
 }
 
-void bull::_init_::changeLang(const std::string& lang)
+void bull::Init::changeLang(const std::string& lang)
 {
     std::string normalized;
     if (lang == "ru" || lang == "RU" || lang == "Ru" || lang == "rU") normalized = "ru";
@@ -196,14 +196,14 @@ void bull::_init_::changeLang(const std::string& lang)
     log_.CUSTOM("blue", "LANG", normalized);
 }
 
-void bull::_init_::ignore()
+void bull::Init::ignore()
 {
     std::ofstream gnore(bull::bullgnore);
     gnore.close();
     log_.CUSTOM_NSL("purple", "+ .bullgnore");
 }
 
-void bull::_init_::collect_ignore()
+void bull::Init::collect_ignore()
 {
     std::string line;
     std::ifstream check_ignore(bullgnore);
@@ -219,7 +219,7 @@ void bull::_init_::collect_ignore()
     check_ignore.close();
 }
 
-void bull::_init_::checkEdit()
+void bull::Init::checkEdit()
 {
     std::string lang = bull::getCurrentLang();
     std::string path, cur_branch, commit, added_files, modified_files, deleted_files, line;
@@ -352,7 +352,7 @@ void bull::_init_::checkEdit()
     current_files.clear();
 }
 
-void bull::_init_::add_clean()
+void bull::Init::add_clean()
 {
     std::string lang = bull::getCurrentLang(), path;
     if (!bull::isInitDir())
@@ -367,7 +367,7 @@ void bull::_init_::add_clean()
     cl.close();
 }
 
-void bull::_init_::add(int startIndex, int argc, char* argv[])
+void bull::Init::add(int startIndex, int argc, char* argv[])
 {
     std::string lang, file_l, entry_path;
     lang = bull::getCurrentLang();
@@ -461,7 +461,7 @@ void bull::_init_::add(int startIndex, int argc, char* argv[])
    
 }
 
-void bull::_init_::branch(const std::string& name)
+void bull::Init::branch(const std::string& name)
 {
     std::string lang, path, result;
 
@@ -497,7 +497,7 @@ void bull::_init_::branch(const std::string& name)
     new_branch.close();
 }
 
-void bull::_init_::list_branch()
+void bull::Init::list_branch()
 {
     std::string lang, cur_branch, res, path, line; 
 
@@ -530,7 +530,7 @@ void bull::_init_::list_branch()
     read_l_s.close();
 }
 
-void bull::_init_::status()
+void bull::Init::status()
 {
     std::string lang, line;
     lang = bull::getCurrentLang();
@@ -560,7 +560,7 @@ void bull::_init_::status()
 
 // ACTION
 
-std::string bull::_action_::hash_gen()
+std::string bull::Action::hash_gen()
 {
     std::random_device rd;
     std::mt19937 gen(rd());
@@ -584,7 +584,7 @@ std::string bull::_action_::hash_gen()
     return hash;
 }
 
-bool bull::_action_::isMoreOne()
+bool bull::Action::isMoreOne()
 {
     int i = 0;
     std::string path = bull::init_dir + "/" + bull::branch_list, line;
@@ -602,7 +602,7 @@ bool bull::_action_::isMoreOne()
     return (i > 1);
 }
 
-std::string bull::_action_::select_random_branch(const std::string& exclude)
+std::string bull::Action::select_random_branch(const std::string& exclude)
 {
     std::string line, path = bull::init_dir + "/" + bull::branch_list;
 
@@ -618,7 +618,7 @@ std::string bull::_action_::select_random_branch(const std::string& exclude)
     return "base";
 }
 
-void bull::_action_::pack(const std::string& comm)
+void bull::Action::pack(const std::string& comm)
 {
     std::string lang, fmt_commit, commit, commit_list, lemma, line_comm;
 
@@ -735,7 +735,7 @@ void bull::_action_::pack(const std::string& comm)
     log_.CUSTOM_NSL("green", result);
 }
 
-void bull::_action_::unpack(const std::string& hash)
+void bull::Action::unpack(const std::string& hash)
 {
     std::string lang = bull::getCurrentLang();
     if (!is_commit(hash))
@@ -785,7 +785,7 @@ void bull::_action_::unpack(const std::string& hash)
     else log_.INFO_NE("The commit '%s' has been successfully unpacked", hash.c_str());
 }
 
-void bull::_action_::set(const std::string& branch_name)
+void bull::Action::set(const std::string& branch_name)
 {
     std::string lang = bull::getCurrentLang();
     if (!is_branch(branch_name))
@@ -800,7 +800,7 @@ void bull::_action_::set(const std::string& branch_name)
 
         if (answer == 'Y' || answer == 'y')
         {
-            bull::_init_ init;
+            bull::Init init;
             init.branch(branch_name);
         }
         else return;
@@ -818,7 +818,7 @@ void bull::_action_::set(const std::string& branch_name)
     else log_.CUSTOM("light_blue", "CURRENT BRANCH", branch_name);
 }
 
-void bull::_action_::remove_branch(const std::string& branch_name)
+void bull::Action::remove_branch(const std::string& branch_name)
 {
     std::string lang = bull::getCurrentLang();
     std::string cur_branch = bull::current_branch();
@@ -878,7 +878,7 @@ void bull::_action_::remove_branch(const std::string& branch_name)
     log_.CUSTOM_NSL("red", res);
 }
 
-void bull::_action_::remove_commit(const std::string& commit_hash)
+void bull::Action::remove_commit(const std::string& commit_hash)
 {
     std::string lang = bull::getCurrentLang();
     std::string path, line, cur_branch, new_commit_list, res;
@@ -922,7 +922,7 @@ void bull::_action_::remove_commit(const std::string& commit_hash)
     log_.CUSTOM_NSL("red", res);
 }
 
-void bull::_action_::log()
+void bull::Action::log()
 {
     std::string lang = bull::getCurrentLang();
     if (!bull::isInitDir())
@@ -965,7 +965,7 @@ void bull::_action_::log()
     read_commites.close();
 }
 
-void bull::_action_::reset()
+void bull::Action::reset()
 {
     std::string lang = bull::getCurrentLang();
     if (!bull::isInitDir())
@@ -992,7 +992,7 @@ void bull::_action_::reset()
     unpack(hash);
 }
 
-void bull::_action_::show_func(const std::string& commit_hash)
+void bull::Action::show_func(const std::string& commit_hash)
 {
     std::string lang = getCurrentLang();
     if (!is_commit(commit_hash))
@@ -1032,13 +1032,13 @@ void bull::_action_::show_func(const std::string& commit_hash)
     read_to_file_list.close();
 }
 
-void bull::_action_::show(const std::string& commit_hash)
+void bull::Action::show(const std::string& commit_hash)
 {
     if (commit_hash.empty()) return;
     show_func(commit_hash);
 }
 
-void bull::_action_::show_last()
+void bull::Action::show_last()
 {
     std::string commit = getLastCommit();
     
@@ -1047,7 +1047,7 @@ void bull::_action_::show_last()
     show_func(commit);
 }
 
-void bull::_action_::show_cur(const std::string& filename)
+void bull::Action::show_cur(const std::string& filename)
 {
     std::string path, cur_branch, commit, lang, res, line;
     lang = getCurrentLang();
@@ -1075,7 +1075,7 @@ void bull::_action_::show_cur(const std::string& filename)
     read_file.close();
 }
 
-void bull::_action_::comm_list_func(const std::string& commit_hash)
+void bull::Action::comm_list_func(const std::string& commit_hash)
 {
     std::string lang = getCurrentLang();
     if (!is_commit(commit_hash))
@@ -1105,12 +1105,12 @@ void bull::_action_::comm_list_func(const std::string& commit_hash)
     read_fl.close();
 }
 
-void bull::_action_::comm_list(const std::string& commit_hash)
+void bull::Action::comm_list(const std::string& commit_hash)
 {
     comm_list_func(commit_hash);
 }
 
-void bull::_action_::comm_list_last()
+void bull::Action::comm_list_last()
 {
     std::string comm = getLastCommit();
     comm_list_func(comm);

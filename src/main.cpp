@@ -10,8 +10,8 @@ int main(int argc, char *argv[])
         return 1;
     }
 
-    bull::_init_ init;
-    bull::_action_ action;
+    bull::Init init;
+    bull::Action action;
 
     if (strcmp(argv[1], "init") == 0) init.init();
 
