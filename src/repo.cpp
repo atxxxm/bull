@@ -4,6 +4,7 @@
 #include <fstream>
 #include <sstream>
 #include <iostream>
+#include <unordered_set>
 
 extern slog::LOG log_;
 extern std::string lang_cache;
@@ -91,21 +92,19 @@ void bull::Init::checkEdit(const std::vector<std::string>& ignore_list)
 
     path = bull::init_dir + "/" + cur_branch + "/" + commit + "/" + bull::file_list;
 
-    std::vector<std::string> commited_files;
-    std::vector<std::string> current_files;
-
     std::vector<std::string> ign = ignore_list;
     ign.push_back(bull::init_dir);
 
-    std::ifstream read_file_list(path);
+    std::unordered_set<std::string> commited_set;
 
+    std::ifstream read_file_list(path);
     while (std::getline(read_file_list, line))
     {
-        if (line.empty()) continue;
-        commited_files.push_back(line);
+        if (!line.empty()) commited_set.insert(line);
     }
-
     read_file_list.close();
+
+    std::unordered_set<std::string> current_set;
 
     for (const auto& entry : std::filesystem::recursive_directory_iterator("."))
     {
@@ -122,44 +121,33 @@ void bull::Init::checkEdit(const std::vector<std::string>& ignore_list)
             }
         }
 
-        if (!should_ignore) current_files.push_back(entry_path);
+        if (!should_ignore) current_set.insert(entry_path);
     }
 
-    for (const auto& cur_file : current_files)
+    for (const auto& cur_file : current_set)
     {
-        bool found = false;
-        for (const auto& com_file : commited_files)
+        if (commited_set.count(cur_file))
         {
-            if (cur_file == com_file)
-            {
-                found = true;
-                std::ifstream comm_file_stream(bull::init_dir + "/" + cur_branch + "/" + commit + "/" + com_file, std::ios::binary);
-                std::ifstream cur_file_stream("./" + cur_file, std::ios::binary);
+            std::ifstream comm_file_stream(bull::init_dir + "/" + cur_branch + "/" + commit + "/" + cur_file, std::ios::binary);
+            std::ifstream cur_file_stream("./" + cur_file, std::ios::binary);
 
-                if (!comm_file_stream.is_open() || !cur_file_stream.is_open()) continue;
+            if (!comm_file_stream.is_open() || !cur_file_stream.is_open()) continue;
 
-                std::stringstream comm_buffer, cur_buffer;
-                comm_buffer << comm_file_stream.rdbuf();
-                cur_buffer << cur_file_stream.rdbuf();
+            std::stringstream comm_buffer, cur_buffer;
+            comm_buffer << comm_file_stream.rdbuf();
+            cur_buffer << cur_file_stream.rdbuf();
 
-                if (comm_buffer.str() != cur_buffer.str()) modified_files += "* " + cur_file + "\n";
-
-                break;
-            }
+            if (comm_buffer.str() != cur_buffer.str()) modified_files += "* " + cur_file + "\n";
         }
-
-        if (!found) added_files += "+ " + cur_file + "\n";
+        else
+        {
+            added_files += "+ " + cur_file + "\n";
+        }
     }
 
-    for (const auto& com_file : commited_files)
+    for (const auto& com_file : commited_set)
     {
-        bool found = false;
-        for (const auto& cur_file : current_files)
-        {
-            if (com_file == cur_file) { found = true; break; }
-        }
-
-        if (!found) deleted_files += "- " + com_file + "\n";
+        if (!current_set.count(com_file)) deleted_files += "- " + com_file + "\n";
     }
 
     if (!added_files.empty())
