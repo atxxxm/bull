@@ -6,9 +6,45 @@
 
 int main(int argc, char *argv[])
 {
+    auto print_help = [](){
+        printf("\nUsage: bull <command> [args]\n\n");
+        printf("Repository:\n");
+        printf("  init                   Initialize a new repository\n");
+        printf("  status                 Show current branch and working tree changes\n");
+        printf("  log                    Show commit history\n");
+        printf("\nStaging:\n");
+        printf("  add .                  Stage all files\n");
+        printf("  add <file>...          Stage specific files\n");
+        printf("  add -clean             Clear staging area\n");
+        printf("  gnore                  Create .bullgnore file\n");
+        printf("\nCommits:\n");
+        printf("  pack <message>         Create a commit with staged files\n");
+        printf("  pack <file.txt>        Create a commit using message from .txt file\n");
+        printf("  unpack <hash>          Restore files from a commit\n");
+        printf("  reset                  Restore files from the latest commit\n");
+        printf("  remove -c <hash>       Delete a commit\n");
+        printf("\nBranches:\n");
+        printf("  new <name>             Create a new branch\n");
+        printf("  branch                 List all branches\n");
+        printf("  set <name>             Switch to a branch\n");
+        printf("  remove -b <name>       Delete a branch\n");
+        printf("\nInspect:\n");
+        printf("  show <hash>            Show contents of a commit\n");
+        printf("  show -last             Show contents of the latest commit\n");
+        printf("  show -cur <file>       Show a file from the latest commit\n");
+        printf("  list <hash>            List files in a commit\n");
+        printf("  list -last             List files in the latest commit\n");
+        printf("  diff                   Diff working tree vs latest commit\n");
+        printf("  diff <hash>            Diff working tree vs a commit\n");
+        printf("  diff <hash1> <hash2>   Diff between two commits\n");
+        printf("\nSettings:\n");
+        printf("  lang <ru|en>           Change output language\n");
+        printf("  help                   Show this help message\n\n");
+    };
+
     if (argc < 2)
     {
-        printf("Usage: bull <command> [args]\n");
+        print_help();
         return 1;
     }
 
@@ -45,6 +81,7 @@ int main(int argc, char *argv[])
             else if (!sub.empty()) action.diff(sub);
             else action.diff();
         }},
+        {"help",        [&]{ print_help(); }},
     };
 
     std::string key = sub.empty() ? cmd : cmd + " " + sub;
@@ -56,7 +93,7 @@ int main(int argc, char *argv[])
     if (it != commands.end())
         it->second();
     else
-        printf("Unknown command: %s\n", cmd.c_str());
+        printf("Unknown command: '%s'. Run 'bull help' to see available commands.\n", cmd.c_str());
 
     return 0;
 }
