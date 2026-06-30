@@ -26,30 +26,16 @@ A lightweight version control system written in C++17. Supports commits, branche
 
 ## Installation
 
-### Windows
-```bat
+```bash
 git clone https://github.com/atxxxm/bull
 cd bull
-install.bat
-```
-
-### Linux
-```bash
-git clone https://github.com/atxxxm/bull
-chmod +x bull/install.sh
-./bull/install.sh
-```
-
----
-
-## Building from source
-
-```bash
-cmake -B build
+cmake -B build -G Ninja
 cmake --build build
 ```
 
 The binary will be at `build/bull.exe` (Windows) or `build/bull` (Linux).
+
+Optionally, add the `build/` directory to your `PATH` to use `bull` from anywhere.
 
 ---
 
