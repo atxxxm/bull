@@ -6,7 +6,9 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
 add_executable(bull
     src/main.cpp
-    src/bull.cpp
+    src/storage.cpp
+    src/repo.cpp
+    src/commit.cpp
     src/slog.cpp
 )
 
