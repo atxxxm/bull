@@ -47,9 +47,8 @@ namespace bull
     class Init
     {
         private:
-            std::vector<std::string> ignore_list;
-            void collect_ignore();
-            void checkEdit();
+            std::vector<std::string> collect_ignore();
+            void checkEdit(const std::vector<std::string>& ignore_list);
         public:
             void init();
             void add_clean();

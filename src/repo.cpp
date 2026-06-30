@@ -56,23 +56,24 @@ void bull::Init::ignore()
     log_.CUSTOM_NSL("purple", "+ .bullgnore");
 }
 
-void bull::Init::collect_ignore()
+std::vector<std::string> bull::Init::collect_ignore()
 {
-    std::string line;
+    std::vector<std::string> ignore_list;
     std::ifstream check_ignore(bull::bullgnore);
 
-    if (!check_ignore.is_open()) return;
+    if (!check_ignore.is_open()) return ignore_list;
 
+    std::string line;
     while (std::getline(check_ignore, line))
     {
         if (line.empty()) continue;
         ignore_list.push_back(line);
     }
 
-    check_ignore.close();
+    return ignore_list;
 }
 
-void bull::Init::checkEdit()
+void bull::Init::checkEdit(const std::vector<std::string>& ignore_list)
 {
     std::string lang = bull::getCurrentLang();
     std::string path, cur_branch, commit, added_files, modified_files, deleted_files, line;
@@ -93,8 +94,8 @@ void bull::Init::checkEdit()
     std::vector<std::string> commited_files;
     std::vector<std::string> current_files;
 
-    collect_ignore();
-    ignore_list.push_back(bull::init_dir);
+    std::vector<std::string> ign = ignore_list;
+    ign.push_back(bull::init_dir);
 
     std::ifstream read_file_list(path);
 
@@ -112,7 +113,7 @@ void bull::Init::checkEdit()
         std::string entry_path = entry.path().string().substr(2);
         bool should_ignore = false;
 
-        for (const auto& il : ignore_list)
+        for (const auto& il : ign)
         {
             if (entry_path.find(il) != std::string::npos)
             {
@@ -192,7 +193,6 @@ void bull::Init::checkEdit()
         else log_.INFO("There are no changes in the working directory.");
     }
 
-    ignore_list.clear();
 }
 
 void bull::Init::add_clean()
@@ -223,7 +223,7 @@ void bull::Init::add(int startIndex, int argc, char* argv[])
     std::vector<std::string> args = bull::getArguments(startIndex, argc, argv);
     std::string file_l, entry_path;
 
-    collect_ignore();
+    std::vector<std::string> ignore_list = collect_ignore();
     ignore_list.push_back(bull::init_dir);
     std::string path = bull::init_dir + "/" + bull::data_list;
 
@@ -254,7 +254,6 @@ void bull::Init::add(int startIndex, int argc, char* argv[])
         }
 
         dataF.close();
-        ignore_list.clear();
 
         log_.CUSTOM_NSL("green", file_l);
         return;
@@ -290,7 +289,6 @@ void bull::Init::add(int startIndex, int argc, char* argv[])
     }
 
     w_f.close();
-    ignore_list.clear();
 
     log_.CUSTOM_NSL("green", file_l);
 }
@@ -389,5 +387,5 @@ void bull::Init::status()
         log_.CUSTOM("blue", "LANG", lang);
     }
 
-    checkEdit();
+    checkEdit(collect_ignore());
 }
