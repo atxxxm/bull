@@ -100,6 +100,23 @@ void bull::Action::pack(const std::string& comm)
     }
     else commit = comm;
 
+    std::string data_path_check = bull::init_dir + "/" + bull::data_list;
+    std::ifstream check_staging(data_path_check);
+    bool staging_empty = true;
+    std::string check_line;
+    while (std::getline(check_staging, check_line))
+    {
+        if (!check_line.empty()) { staging_empty = false; break; }
+    }
+    check_staging.close();
+
+    if (staging_empty)
+    {
+        if (lang == "ru") log_.WARNING("Нет файлов в staging area. Используйте 'bull add'.");
+        else log_.WARNING("Nothing to commit. Use 'bull add' to stage files.");
+        return;
+    }
+
     std::string hash = hash_gen();
     std::string cur_branch = bull::current_branch();
     std::string path = bull::init_dir + "/" + cur_branch + "/" + bull::commit_list;
