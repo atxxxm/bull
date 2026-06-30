@@ -21,11 +21,24 @@ bool bull::isValidName(const std::string& name)
 bull::CommitInfo bull::parseCommitLine(const std::string& line)
 {
     CommitInfo info;
-    std::istringstream ss(line);
-    std::getline(ss, info.hash, '|');
-    std::getline(ss, info.timestamp, '|');
-    std::getline(ss, info.parent_hash, '|');
-    std::getline(ss, info.message);
+
+    if (line.find('|') != std::string::npos)
+    {
+        std::istringstream ss(line);
+        std::getline(ss, info.hash, '|');
+        std::getline(ss, info.timestamp, '|');
+        std::getline(ss, info.parent_hash, '|');
+        std::getline(ss, info.message);
+    }
+    else
+    {
+        size_t pos = line.find(' ');
+        info.hash = line.substr(0, pos);
+        info.message = (pos != std::string::npos) ? line.substr(pos + 1) : "";
+        info.timestamp = "0";
+        info.parent_hash = "none";
+    }
+
     return info;
 }
 
