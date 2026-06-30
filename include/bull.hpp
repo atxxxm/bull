@@ -89,5 +89,6 @@ namespace bull
             void diff(const std::string& hash1, const std::string& hash2);
             void stash();
             void stash_pop();
+            void merge(const std::string& branch_name);
     };
 }

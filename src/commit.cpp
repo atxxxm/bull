@@ -7,6 +7,7 @@
 #include <ctime>
 #include <vector>
 #include <algorithm>
+#include <unordered_set>
 
 extern slog::LOG log_;
 
@@ -827,4 +828,143 @@ void bull::Action::stash_pop()
 
     if (lang == "ru") log_.INFO("Изменения восстановлены из stash.");
     else log_.INFO("Changes restored from stash.");
+}
+
+void bull::Action::merge(const std::string& branch_name)
+{
+    std::string lang = bull::getCurrentLang();
+
+    if (!bull::isInitDir())
+    {
+        if (lang == "ru") log_.ERROR("Проект не был инициализирован!");
+        else log_.ERROR("The project has not been initialized!");
+        return;
+    }
+
+    if (!bull::isValidName(branch_name))
+    {
+        if (lang == "ru") log_.ERROR_NE("Недопустимое имя ветки: '%s'", branch_name.c_str());
+        else log_.ERROR_NE("Invalid branch name: '%s'", branch_name.c_str());
+        return;
+    }
+
+    std::string cur_branch = bull::current_branch();
+
+    if (branch_name == cur_branch)
+    {
+        if (lang == "ru") log_.ERROR("Нельзя слить ветку саму с собой!");
+        else log_.ERROR("Cannot merge a branch into itself!");
+        return;
+    }
+
+    if (!bull::is_branch(branch_name))
+    {
+        if (lang == "ru") log_.ERROR_NE("Ветка '%s' не существует!", branch_name.c_str());
+        else log_.ERROR_NE("Branch '%s' does not exist!", branch_name.c_str());
+        return;
+    }
+
+    std::string cur_hash  = bull::getLastCommit();
+    std::string cur_base  = bull::init_dir + "/" + cur_branch + "/" + cur_hash + "/";
+
+    // Временно переключаемся на merge-ветку чтобы получить её последний коммит
+    std::string merge_commit_list = bull::init_dir + "/" + branch_name + "/" + bull::commit_list;
+    std::ifstream read_mcl(merge_commit_list);
+    std::string merge_line;
+    std::getline(read_mcl, merge_line);
+    read_mcl.close();
+
+    if (merge_line.empty())
+    {
+        if (lang == "ru") log_.ERROR_NE("В ветке '%s' нет коммитов!", branch_name.c_str());
+        else log_.ERROR_NE("Branch '%s' has no commits!", branch_name.c_str());
+        return;
+    }
+
+    std::string merge_hash = bull::parseCommitLine(merge_line).hash;
+    std::string merge_base = bull::init_dir + "/" + branch_name + "/" + merge_hash + "/";
+
+    auto merge_files = read_file_list(merge_base + bull::file_list);
+    auto cur_files   = cur_hash.empty() ? std::vector<std::string>{} : read_file_list(cur_base + bull::file_list);
+
+    std::unordered_set<std::string> cur_set(cur_files.begin(), cur_files.end());
+
+    std::ofstream staging(bull::init_dir + "/" + bull::data_list);
+
+    int conflicts = 0;
+
+    for (const auto& f : merge_files)
+    {
+        std::string merge_file_path = merge_base + f;
+
+        if (cur_set.count(f))
+        {
+            std::string cur_file_path = cur_base + f;
+
+            auto lines_cur   = read_lines(cur_file_path);
+            auto lines_merge = read_lines(merge_file_path);
+
+            if (lines_cur == lines_merge)
+            {
+                // одинаковые — берём как есть
+                std::filesystem::create_directories(std::filesystem::path(f).parent_path());
+                std::ifstream src(cur_file_path, std::ios::binary);
+                std::ofstream dst(f, std::ios::binary);
+                dst << src.rdbuf();
+            }
+            else
+            {
+                // конфликт — записываем маркеры
+                std::filesystem::create_directories(std::filesystem::path(f).parent_path());
+                std::ofstream dst(f);
+                dst << "<<<<<<< " << cur_branch << "\n";
+                for (const auto& l : lines_cur)   dst << l << "\n";
+                dst << "=======\n";
+                for (const auto& l : lines_merge) dst << l << "\n";
+                dst << ">>>>>>> " << branch_name << "\n";
+
+                if (lang == "ru") log_.WARNING_NE("Конфликт: %s", f.c_str());
+                else log_.WARNING_NE("Conflict: %s", f.c_str());
+                conflicts++;
+            }
+        }
+        else
+        {
+            // новый файл из merge-ветки
+            std::filesystem::create_directories(std::filesystem::path(f).parent_path());
+            std::ifstream src(merge_file_path, std::ios::binary);
+            std::ofstream dst(f, std::ios::binary);
+            dst << src.rdbuf();
+        }
+
+        staging << "./" << f << "\n";
+    }
+
+    // файлы только в текущей ветке — оставляем
+    for (const auto& f : cur_files)
+    {
+        bool in_merge = std::find(merge_files.begin(), merge_files.end(), f) != merge_files.end();
+        if (!in_merge)
+        {
+            std::string cur_file_path = cur_base + f;
+            std::filesystem::create_directories(std::filesystem::path(f).parent_path());
+            std::ifstream src(cur_file_path, std::ios::binary);
+            std::ofstream dst(f, std::ios::binary);
+            dst << src.rdbuf();
+            staging << "./" << f << "\n";
+        }
+    }
+
+    staging.close();
+
+    if (conflicts > 0)
+    {
+        if (lang == "ru") log_.WARNING_NE("Слияние завершено с %d конфликтами. Разрешите их и сделайте 'bull pack'.", conflicts);
+        else log_.WARNING_NE("Merge completed with %d conflict(s). Resolve them and run 'bull pack'.", conflicts);
+    }
+    else
+    {
+        if (lang == "ru") log_.INFO_NE("Ветка '%s' успешно слита. Сделайте 'bull pack' для фиксации.", branch_name.c_str());
+        else log_.INFO_NE("Branch '%s' merged successfully. Run 'bull pack' to commit.", branch_name.c_str());
+    }
 }

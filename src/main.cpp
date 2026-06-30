@@ -37,7 +37,9 @@ int main(int argc, char *argv[])
         printf("  diff                   Diff working tree vs latest commit\n");
         printf("  diff <hash>            Diff working tree vs a commit\n");
         printf("  diff <hash1> <hash2>   Diff between two commits\n");
-        printf("Stash:\n");
+        printf("Merge:\n");
+        printf("  merge <branch>         Merge a branch into the current branch\n");
+        printf("\nStash:\n");
         printf("  stash                  Save staged changes and restore last commit\n");
         printf("  stash pop              Restore saved changes from stash\n");
         printf("\nSettings:\n");
@@ -85,6 +87,7 @@ int main(int argc, char *argv[])
             else action.diff();
         }},
         {"stash pop",   [&]{ action.stash_pop(); }},
+        {"merge",       [&]{ if (!sub.empty()) action.merge(sub); }},
         {"stash",       [&]{ action.stash(); }},
         {"help",        [&]{ print_help(); }},
     };
