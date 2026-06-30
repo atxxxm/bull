@@ -553,18 +553,24 @@ bool bull::_action_::isInitDir()
 
 std::string bull::_action_::hash_gen()
 {
-    std::string hash;
-
     std::random_device rd;
     std::mt19937 gen(rd());
     std::uniform_int_distribution<> dist(0, 9);
     std::uniform_int_distribution<> ch('a', 'z');
 
-    for (int i = 0; i < 5; i++)
+    std::string hash;
+    std::string cur_branch = bull::current_branch();
+
+    do
     {
-        hash += std::to_string(dist(gen));
-        hash += static_cast<char>(ch(gen));
+        hash.clear();
+        for (int i = 0; i < 8; i++)
+        {
+            hash += std::to_string(dist(gen));
+            hash += static_cast<char>(ch(gen));
+        }
     }
+    while (std::filesystem::exists(bull::init_dir + "/" + cur_branch + "/" + hash));
 
     return hash;
 }
