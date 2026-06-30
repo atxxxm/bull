@@ -12,7 +12,7 @@ slog::LOG log_;
 bool bull::isBinaryFile(const std::string& filename) 
 {
     std::ifstream file(filename, std::ios::binary);
-    if (!file) false;
+    if (!file) return false;
 
     char byte;
     while (file.get(byte)) 
