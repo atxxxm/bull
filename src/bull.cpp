@@ -426,15 +426,33 @@ void bull::_init_::add(int startIndex, int argc, char* argv[])
     }
     else
     {
+        std::vector<std::string> existing;
+        std::string ex_line;
+        std::ifstream read_existing(path);
+        while (std::getline(read_existing, ex_line))
+        {
+            if (!ex_line.empty()) existing.push_back(ex_line);
+        }
+        read_existing.close();
+
         std::ofstream w_f(path);
+        for (const auto& e : existing) w_f << e << "\n";
 
         for (const auto& a : args)
         {
             if (!std::filesystem::exists(a) || !std::filesystem::is_regular_file(a)) continue;
-            
+
             entry_path = "./" + a;
-            w_f << entry_path << "\n";
-            file_l += "+ " + entry_path + "\n";
+
+            bool already = false;
+            for (const auto& e : existing)
+                if (e == entry_path) { already = true; break; }
+
+            if (!already)
+            {
+                w_f << entry_path << "\n";
+                file_l += "+ " + entry_path + "\n";
+            }
         }
 
         w_f.close();
