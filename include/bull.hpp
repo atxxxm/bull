@@ -24,6 +24,8 @@ namespace bull
 
     CommitInfo parseCommitLine(const std::string& line);
 
+    bool isValidName(const std::string& name);
+
     bool isBinaryFile(const std::string& filename);
 
     bool isInitDir();

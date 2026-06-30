@@ -218,6 +218,12 @@ void bull::Action::unpack(const std::string& hash)
 void bull::Action::set(const std::string& branch_name)
 {
     std::string lang = bull::getCurrentLang();
+    if (!bull::isValidName(branch_name))
+    {
+        if (lang == "ru") log_.ERROR_NE("Недопустимое имя ветки: '%s'", branch_name.c_str());
+        else log_.ERROR_NE("Invalid branch name: '%s'", branch_name.c_str());
+        return;
+    }
     if (!bull::is_branch(branch_name))
     {
         if (lang == "ru") log_.ERROR_NE("Ветка '%s' не существует!", branch_name.c_str());
@@ -253,6 +259,12 @@ void bull::Action::remove_branch(const std::string& branch_name)
     std::string lang = bull::getCurrentLang();
     std::string cur_branch = bull::current_branch();
 
+    if (!bull::isValidName(branch_name))
+    {
+        if (lang == "ru") log_.ERROR_NE("Недопустимое имя ветки: '%s'", branch_name.c_str());
+        else log_.ERROR_NE("Invalid branch name: '%s'", branch_name.c_str());
+        return;
+    }
     if (!bull::is_branch(branch_name))
     {
         if (lang == "ru") log_.ERROR("Такой ветки не существует!");

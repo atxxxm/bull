@@ -8,6 +8,16 @@
 slog::LOG log_;
 std::string lang_cache;
 
+bool bull::isValidName(const std::string& name)
+{
+    if (name.empty()) return false;
+    if (name.find("..") != std::string::npos) return false;
+    if (name.find('/') != std::string::npos) return false;
+    if (name.find('\\') != std::string::npos) return false;
+    if (name.find('|') != std::string::npos) return false;
+    return true;
+}
+
 bull::CommitInfo bull::parseCommitLine(const std::string& line)
 {
     CommitInfo info;

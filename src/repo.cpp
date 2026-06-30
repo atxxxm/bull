@@ -298,6 +298,12 @@ void bull::Init::add(int startIndex, int argc, char* argv[])
 void bull::Init::branch(const std::string& name)
 {
     std::string lang = bull::getCurrentLang();
+    if (!bull::isValidName(name))
+    {
+        if (lang == "ru") log_.ERROR_NE("Недопустимое имя ветки: '%s'", name.c_str());
+        else log_.ERROR_NE("Invalid branch name: '%s'", name.c_str());
+        return;
+    }
     if (!bull::isInitDir())
     {
         if (lang == "ru") log_.ERROR("Проект не был инициализирован!");
