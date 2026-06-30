@@ -151,6 +151,7 @@ void bull::Action::pack(const std::string& comm)
     std::ofstream wrt;
     std::ifstream red;
     std::ofstream list_f(path_to_copy + bull::file_list);
+    std::ofstream ref_f(path_to_copy + bull::ref_list);
 
     while (std::getline(get_list_file, line))
     {
@@ -160,6 +161,28 @@ void bull::Action::pack(const std::string& comm)
         std::string normalized = line;
         if (normalized.size() >= 2 && normalized[0] == '.' && normalized[1] == '/')
             normalized = normalized.substr(2);
+
+        // Если файл не изменился по сравнению с родителем — сохраняем ссылку
+        if (parent_hash != "none")
+        {
+            std::string parent_path = bull::resolve_file_path(cur_branch, parent_hash, normalized);
+            if (!parent_path.empty())
+            {
+                std::ifstream parent_stream(parent_path, std::ios::binary);
+                red.open(line, std::ios::binary);
+
+                std::stringstream parent_buf, cur_buf;
+                parent_buf << parent_stream.rdbuf();
+                cur_buf << red.rdbuf();
+                red.close();
+
+                if (parent_buf.str() == cur_buf.str())
+                {
+                    ref_f << normalized << "|" << parent_hash << "\n";
+                    continue;
+                }
+            }
+        }
 
         list_f << normalized << "\n";
 
@@ -187,6 +210,7 @@ void bull::Action::pack(const std::string& comm)
 
     get_list_file.close();
     list_f.close();
+    ref_f.close();
 
     log_.CUSTOM_NSL("green", "+ " + cur_branch + "->" + hash + " - " + commit);
 }
@@ -205,29 +229,44 @@ void bull::Action::unpack(const std::string& hash)
     std::string path = bull::init_dir + "/" + cur_branch + "/" + hash + "/" + bull::file_list;
     std::string path_to_read = bull::init_dir + "/" + cur_branch + "/" + hash + "/";
 
-    std::string line, fmt_dir;
+    auto restore_file = [&](const std::string& src, const std::string& dst)
+    {
+        std::string dir = std::filesystem::path(dst).parent_path().string();
+        if (!dir.empty()) std::filesystem::create_directories(dir);
+
+        std::ifstream red(src, std::ios::binary);
+        std::ofstream wrt(dst, std::ios::binary);
+        if (red.is_open() && wrt.is_open()) wrt << red.rdbuf();
+    };
+
+    std::string line;
     std::ifstream r_file_list(path);
-    std::ifstream red;
-    std::ofstream wrt;
 
     while (std::getline(r_file_list, line))
     {
         if (line.empty()) continue;
-        if (!std::filesystem::exists(path_to_read + line)) continue;
-
-        fmt_dir = std::filesystem::path(line).parent_path().string();
-        if (!fmt_dir.empty()) std::filesystem::create_directories(fmt_dir);
-
-        red.open(path_to_read + line, std::ios::binary);
-        wrt.open(line, std::ios::binary);
-
-        if (red.is_open() && wrt.is_open()) wrt << red.rdbuf();
-
-        red.close();
-        wrt.close();
+        std::string src = path_to_read + line;
+        if (std::filesystem::exists(src)) restore_file(src, line);
     }
 
     r_file_list.close();
+
+    std::ifstream r_ref_list(path_to_read + bull::ref_list);
+
+    while (std::getline(r_ref_list, line))
+    {
+        if (line.empty()) continue;
+        size_t pos = line.find('|');
+        if (pos == std::string::npos) continue;
+
+        std::string filename  = line.substr(0, pos);
+        std::string ref_hash  = line.substr(pos + 1);
+        std::string cur_branch = bull::current_branch();
+        std::string src = bull::resolve_file_path(cur_branch, ref_hash, filename);
+        if (!src.empty()) restore_file(src, filename);
+    }
+
+    r_ref_list.close();
 
     if (lang == "ru") log_.INFO_NE("Коммит '%s' успешно распакован", hash.c_str());
     else log_.INFO_NE("The commit '%s' has been successfully unpacked", hash.c_str());
@@ -444,30 +483,38 @@ void bull::Action::show_func(const std::string& commit_hash)
     }
 
     std::string cur_branch = bull::current_branch();
-    std::string path_to_file_list = bull::init_dir + "/" + cur_branch + "/" + commit_hash + "/" + bull::file_list;
-    std::string path_to_commit = bull::init_dir + "/" + cur_branch + "/" + commit_hash + "/";
-
-    std::ifstream read_to_file_list(path_to_file_list);
-    std::ifstream read_file;
-    std::string line;
+    std::string base = bull::init_dir + "/" + cur_branch + "/" + commit_hash + "/";
 
     log_.CUSTOM_NSL("green", cur_branch + "->" + commit_hash);
 
+    auto show_file = [&](const std::string& filepath, const std::string& label)
+    {
+        if (bull::isBinaryFile(filepath)) return;
+        std::ifstream f(filepath, std::ios::binary);
+        if (!f.is_open()) return;
+        log_.CUSTOM_NSL("blue", label + ":");
+        std::cout << std::string(std::istreambuf_iterator<char>(f), std::istreambuf_iterator<char>()) << std::endl;
+        printf("\n");
+    };
+
+    std::string line;
+    std::ifstream read_to_file_list(base + bull::file_list);
     while (std::getline(read_to_file_list, line))
+        if (!line.empty()) show_file(base + line, line);
+    read_to_file_list.close();
+
+    std::ifstream read_ref(base + bull::ref_list);
+    while (std::getline(read_ref, line))
     {
         if (line.empty()) continue;
-        if (bull::isBinaryFile(path_to_commit + line)) continue;
-
-        read_file.open(path_to_commit + line, std::ios::binary);
-
-        log_.CUSTOM_NSL("blue", line + ":");
-        std::cout << std::string(std::istreambuf_iterator<char>(read_file), std::istreambuf_iterator<char>()) << std::endl;
-        printf("\n");
-
-        read_file.close();
+        size_t pos = line.find('|');
+        if (pos == std::string::npos) continue;
+        std::string filename = line.substr(0, pos);
+        std::string ref_hash = line.substr(pos + 1);
+        std::string src = bull::resolve_file_path(cur_branch, ref_hash, filename);
+        if (!src.empty()) show_file(src, filename);
     }
-
-    read_to_file_list.close();
+    read_ref.close();
 }
 
 void bull::Action::show(const std::string& commit_hash)
@@ -522,22 +569,27 @@ void bull::Action::comm_list_func(const std::string& commit_hash)
     }
 
     std::string cur_branch = bull::current_branch();
-    std::string path = bull::init_dir + "/" + cur_branch + "/" + commit_hash + "/" + bull::file_list;
-
-    std::ifstream read_fl(path);
-    std::string line;
+    std::string base = bull::init_dir + "/" + cur_branch + "/" + commit_hash + "/";
 
     log_.CUSTOM_NSL("green", cur_branch + "->" + commit_hash + "\n");
 
     if (lang == "ru") log_.CUSTOM("blue", "ФАЙЛЫ", "");
     else log_.CUSTOM("blue", "FILES", "");
 
+    std::string line;
+    std::ifstream read_fl(base + bull::file_list);
     while (std::getline(read_fl, line))
-    {
-        printf("%s\n", line.c_str());
-    }
-
+        if (!line.empty()) printf("%s\n", line.c_str());
     read_fl.close();
+
+    std::ifstream read_ref(base + bull::ref_list);
+    while (std::getline(read_ref, line))
+    {
+        if (line.empty()) continue;
+        size_t pos = line.find('|');
+        if (pos != std::string::npos) printf("%s (ref)\n", line.substr(0, pos).c_str());
+    }
+    read_ref.close();
 }
 
 void bull::Action::comm_list(const std::string& commit_hash)

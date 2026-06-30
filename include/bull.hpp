@@ -14,6 +14,7 @@ namespace bull
     const std::string file_list = "file_list"; 
     const std::string lang_config = "LANG";
     const std::string stash_dir = "stash";
+    const std::string ref_list  = "ref_list";
 
     struct CommitInfo
     {
@@ -24,6 +25,8 @@ namespace bull
     };
 
     CommitInfo parseCommitLine(const std::string& line);
+
+    std::string resolve_file_path(const std::string& branch, const std::string& commit_hash, const std::string& filename);
 
     bool isValidName(const std::string& name);
 

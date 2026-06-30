@@ -151,6 +151,30 @@ std::vector<std::string> bull::getArguments(int startIndex, int argc, char* argv
     return args;
 }
 
+std::string bull::resolve_file_path(const std::string& branch, const std::string& commit_hash, const std::string& filename)
+{
+    std::string direct = bull::init_dir + "/" + branch + "/" + commit_hash + "/" + filename;
+    if (std::filesystem::exists(direct)) return direct;
+
+    std::string ref_list_path = bull::init_dir + "/" + branch + "/" + commit_hash + "/" + bull::ref_list;
+    std::ifstream rf(ref_list_path);
+    std::string line;
+
+    while (std::getline(rf, line))
+    {
+        size_t pos = line.find('|');
+        if (pos == std::string::npos) continue;
+
+        if (line.substr(0, pos) == filename)
+        {
+            std::string ref_hash = line.substr(pos + 1);
+            return resolve_file_path(branch, ref_hash, filename);
+        }
+    }
+
+    return "";
+}
+
 std::string bull::getCurrentLang()
 {
     if (!lang_cache.empty()) return lang_cache;
