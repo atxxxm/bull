@@ -146,7 +146,7 @@ void slog::LOG::CUSTOM(std::string color, const char* text, std::string str)
     }
     else if (color == "purple")
     {
-        print(COLOR::DARK_RED, text, str);
+        print(COLOR::PURPLE, text, str);
     }
     else if (color == "light_blue")
     {
