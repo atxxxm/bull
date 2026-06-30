@@ -4,9 +4,15 @@
 
 int main(int argc, char *argv[])
 {
+    if (argc < 2)
+    {
+        printf("Usage: bull <command> [args]\n");
+        return 1;
+    }
+
     bull::_init_ init;
     bull::_action_ action;
-    
+
     if (strcmp(argv[1], "init") == 0) init.init();
 
     else if (strcmp(argv[1], "add") == 0 && strcmp(argv[2], "-clean") == 0) init.add_clean();
