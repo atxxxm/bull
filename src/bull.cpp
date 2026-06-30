@@ -230,7 +230,7 @@ void bull::_init_::checkEdit()
 
     cur_branch = current_branch();
     commit = getLastCommit();
-    if (!is_commit(commit) && commit.empty())
+    if (commit.empty() || !is_commit(commit))
     {
         printf("\n");
         if (lang == "ru") log_.WARNING("У вас нет коммитов.");
