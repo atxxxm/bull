@@ -76,9 +76,9 @@ bool bull::is_commit(const std::string& hash)
     return false;
 }
 
-int bull::getLineCommit(const std::string& hash, const std::string& commit_name)
-{   
-    std::string path = bull::init_dir + "/" + hash + "/" + bull::commit_list, line;
+int bull::getLineCommit(const std::string& branch, const std::string& commit_hash)
+{
+    std::string path = bull::init_dir + "/" + branch + "/" + bull::commit_list, line;
 
     std::ifstream read_commit_list(path);
 
@@ -95,7 +95,7 @@ int bull::getLineCommit(const std::string& hash, const std::string& commit_name)
         {
             fmt_line = line.substr(0, pos);
 
-            if (fmt_line ==  commit_name)
+            if (fmt_line == commit_hash)
             {
                 break;
             }

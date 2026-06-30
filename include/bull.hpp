@@ -22,7 +22,7 @@ namespace bull
 
     bool is_commit(const std::string& hash); 
 
-    int getLineCommit(const std::string& hash, const std::string& commit_name); 
+    int getLineCommit(const std::string& branch, const std::string& commit_hash);
 
     std::string getLastCommit(); 
 
