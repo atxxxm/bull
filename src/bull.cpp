@@ -388,7 +388,7 @@ void bull::_init_::add(int startIndex, int argc, char* argv[])
     ignore_list.push_back(bull::init_dir);
     std::string path = bull::init_dir + "/" + bull::data_list;
 
-    if (args.size() < 2 && args.back() == ".")
+    if (args.size() == 1 && args[0] == ".")
     {
         std::ofstream dataF(path);
         
