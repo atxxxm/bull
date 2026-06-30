@@ -5,6 +5,8 @@
 #include <iostream>
 #include <random>
 #include <ctime>
+#include <vector>
+#include <algorithm>
 
 extern slog::LOG log_;
 
@@ -516,4 +518,160 @@ void bull::Action::comm_list(const std::string& commit_hash)
 void bull::Action::comm_list_last()
 {
     comm_list_func(bull::getLastCommit());
+}
+
+static std::vector<std::string> read_lines(const std::string& path)
+{
+    std::vector<std::string> lines;
+    std::ifstream f(path);
+    std::string line;
+    while (std::getline(f, line)) lines.push_back(line);
+    return lines;
+}
+
+void bull::Action::diff_files(const std::string& path_a, const std::string& path_b, const std::string& filename)
+{
+    auto a = read_lines(path_a);
+    auto b = read_lines(path_b);
+
+    int m = static_cast<int>(a.size());
+    int n = static_cast<int>(b.size());
+
+    std::vector<std::vector<int>> dp(m + 1, std::vector<int>(n + 1, 0));
+    for (int i = 1; i <= m; i++)
+        for (int j = 1; j <= n; j++)
+            dp[i][j] = (a[i-1] == b[j-1]) ? dp[i-1][j-1] + 1 : std::max(dp[i-1][j], dp[i][j-1]);
+
+    std::vector<std::pair<char, std::string>> result;
+    int i = m, j = n;
+    while (i > 0 || j > 0)
+    {
+        if (i > 0 && j > 0 && a[i-1] == b[j-1])
+        {
+            result.push_back({' ', a[i-1]});
+            i--; j--;
+        }
+        else if (j > 0 && (i == 0 || dp[i][j-1] >= dp[i-1][j]))
+        {
+            result.push_back({'+', b[j-1]});
+            j--;
+        }
+        else
+        {
+            result.push_back({'-', a[i-1]});
+            i--;
+        }
+    }
+
+    std::reverse(result.begin(), result.end());
+
+    bool has_changes = false;
+    for (auto& [c, l] : result) if (c != ' ') { has_changes = true; break; }
+    if (!has_changes) return;
+
+    printf("\033[1;94m--- %s\033[0m\n", filename.c_str());
+
+    for (auto& [c, l] : result)
+    {
+        if (c == '+') printf("\033[1;92m+ %s\033[0m\n", l.c_str());
+        else if (c == '-') printf("\033[1;91m- %s\033[0m\n", l.c_str());
+    }
+
+    printf("\n");
+}
+
+static std::vector<std::string> read_file_list(const std::string& path)
+{
+    std::vector<std::string> files;
+    std::ifstream f(path);
+    std::string line;
+    while (std::getline(f, line))
+        if (!line.empty()) files.push_back(line);
+    return files;
+}
+
+void bull::Action::diff(const std::string& hash1, const std::string& hash2)
+{
+    std::string lang = bull::getCurrentLang();
+    if (!bull::is_commit(hash1) || !bull::is_commit(hash2))
+    {
+        if (lang == "ru") log_.ERROR("Один или оба коммита не найдены!");
+        else log_.ERROR("One or both commits not found!");
+        return;
+    }
+
+    std::string cur_branch = bull::current_branch();
+    std::string base1 = bull::init_dir + "/" + cur_branch + "/" + hash1 + "/";
+    std::string base2 = bull::init_dir + "/" + cur_branch + "/" + hash2 + "/";
+
+    auto files1 = read_file_list(base1 + bull::file_list);
+    auto files2 = read_file_list(base2 + bull::file_list);
+
+    for (const auto& f : files2)
+    {
+        bool in_old = std::find(files1.begin(), files1.end(), f) != files1.end();
+        std::string p1 = in_old ? base1 + f : "";
+        std::string p2 = base2 + f;
+
+        if (!bull::isBinaryFile(p2))
+        {
+            if (!in_old)
+                printf("\033[1;92m+++ %s (new file)\033[0m\n\n", f.c_str());
+            else
+                diff_files(p1, p2, f);
+        }
+    }
+
+    for (const auto& f : files1)
+    {
+        bool in_new = std::find(files2.begin(), files2.end(), f) != files2.end();
+        if (!in_new)
+            printf("\033[1;91m--- %s (deleted)\033[0m\n\n", f.c_str());
+    }
+}
+
+void bull::Action::diff(const std::string& hash)
+{
+    std::string lang = bull::getCurrentLang();
+    if (!bull::is_commit(hash))
+    {
+        if (lang == "ru") log_.ERROR_NE("Коммит с хэшем '%s' не найден!", hash.c_str());
+        else log_.ERROR_NE("No commits found with the hash '%s'", hash.c_str());
+        return;
+    }
+
+    std::string cur_branch = bull::current_branch();
+    std::string commit_base = bull::init_dir + "/" + cur_branch + "/" + hash + "/";
+    auto committed = read_file_list(commit_base + bull::file_list);
+
+    for (const auto& f : committed)
+    {
+        std::string committed_path = commit_base + f;
+        std::string working_path = "./" + f;
+
+        if (bull::isBinaryFile(committed_path)) continue;
+
+        if (!std::filesystem::exists(working_path))
+        {
+            printf("\033[1;91m--- %s (deleted)\033[0m\n\n", f.c_str());
+            continue;
+        }
+
+        diff_files(committed_path, working_path, f);
+    }
+}
+
+void bull::Action::diff()
+{
+    std::string hash = bull::getLastCommit();
+    std::string lang = bull::getCurrentLang();
+
+    if (hash.empty())
+    {
+        if (lang == "ru") log_.ERROR("У вас нет коммитов!");
+        else log_.ERROR("You don't have any commits!");
+        return;
+    }
+
+    diff(hash);
 }

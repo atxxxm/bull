@@ -40,6 +40,11 @@ int main(int argc, char *argv[])
         {"show",        [&]{ if (!sub.empty()) action.show(sub); }},
         {"list -last",  [&]{ action.comm_list_last(); }},
         {"list",        [&]{ if (!sub.empty()) action.comm_list(sub); }},
+        {"diff",        [&]{
+            if (!sub.empty() && !arg3.empty()) action.diff(sub, arg3);
+            else if (!sub.empty()) action.diff(sub);
+            else action.diff();
+        }},
     };
 
     std::string key = sub.empty() ? cmd : cmd + " " + sub;

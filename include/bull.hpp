@@ -67,6 +67,7 @@ namespace bull
             std::string select_random_branch(const std::string& exclude);
             void show_func(const std::string& commit_hash);
             void comm_list_func(const std::string& commit_hash);
+            void diff_files(const std::string& path_a, const std::string& path_b, const std::string& filename);
 
         public:
             void pack(const std::string& commit);
@@ -81,5 +82,8 @@ namespace bull
             void show_cur(const std::string& filename);
             void comm_list(const std::string& commit_hash);
             void comm_list_last();
+            void diff();
+            void diff(const std::string& hash);
+            void diff(const std::string& hash1, const std::string& hash2);
     };
 }
